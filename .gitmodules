@@ -1,0 +1,3 @@
+[submodule "Content/Assets"]
+	path = Content/Assets
+	url = https://github.com/Othereum/PTE-Content.git
