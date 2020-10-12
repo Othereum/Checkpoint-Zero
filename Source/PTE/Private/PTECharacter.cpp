@@ -1,34 +1,52 @@
 // © 2020 Seokjin Lee <seokjin.dev@gmail.com>
 
-
 #include "PTECharacter.h"
 
-// Sets default values
 APTECharacter::APTECharacter()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 }
 
-// Called when the game starts or when spawned
 void APTECharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
 }
 
-// Called every frame
 void APTECharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
 }
 
-// Called to bind functionality to input
 void APTECharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+	PlayerInputComponent->BindAxis(TEXT("MoveForward"), this, &APTECharacter::MoveForward);
+	PlayerInputComponent->BindAxis(TEXT("MoveRight"), this, &APTECharacter::MoveRight);
+	PlayerInputComponent->BindAxis(TEXT("Turn"), this, &APTECharacter::Turn);
+	PlayerInputComponent->BindAxis(TEXT("LookUp"), this, &APTECharacter::LookUp);
+}
+
+void APTECharacter::MoveForward(float AxisValue)
+{
+	AddMovementInput(GetActorForwardVector(), AxisValue);
+}
+
+void APTECharacter::MoveRight(float AxisValue)
+{
+	AddMovementInput(GetActorRightVector(), AxisValue);
+}
+
+void APTECharacter::Turn(float AxisValue)
+{
+	AddControllerYawInput(AxisValue);
+}
+
+void APTECharacter::LookUp(float AxisValue)
+{
+	AddControllerPitchInput(AxisValue);
 }
 
