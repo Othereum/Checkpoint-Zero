@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// © 2020 Seokjin Lee <seokjin.dev@gmail.com>
 
 using UnrealBuildTool;
 using System.Collections.Generic;
