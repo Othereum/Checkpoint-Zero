@@ -3,13 +3,13 @@
 using UnrealBuildTool;
 using System.Collections.Generic;
 
-public class PTETarget : TargetRules
+public class CP0Target : TargetRules
 {
-	public PTETarget(TargetInfo Target) : base(Target)
+	public CP0Target(TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Game;
 		DefaultBuildSettings = BuildSettingsVersion.V2;
 
-		ExtraModuleNames.AddRange( new string[] { "PTE" } );
+		ExtraModuleNames.AddRange( new string[] { "CP0" } );
 	}
 }

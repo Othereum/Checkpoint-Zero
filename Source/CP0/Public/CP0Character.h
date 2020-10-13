@@ -4,15 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "PTECharacter.generated.h"
+#include "CP0Character.generated.h"
 
 UCLASS()
-class PTE_API APTECharacter : public ACharacter
+class CP0_API ACP0Character : public ACharacter
 {
 	GENERATED_BODY()
 
 public:
-	APTECharacter();
+	ACP0Character();
 
 protected:
 	void BeginPlay() override;
