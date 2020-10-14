@@ -28,6 +28,7 @@ void ACP0Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
     PlayerInputComponent->BindAxis(TEXT("MoveRight"), this, &ACP0Character::MoveRight);
     PlayerInputComponent->BindAxis(TEXT("Turn"), this, &ACP0Character::Turn);
     PlayerInputComponent->BindAxis(TEXT("LookUp"), this, &ACP0Character::LookUp);
+
     PlayerInputComponent->BindAction(TEXT("Sprint"), IE_Pressed, this, &ACP0Character::SprintPressed);
     PlayerInputComponent->BindAction(TEXT("Sprint"), IE_Released, this, &ACP0Character::SprintReleased);
 }

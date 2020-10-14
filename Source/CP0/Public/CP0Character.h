@@ -2,11 +2,12 @@
 
 #pragma once
 
+#include "DataTypes/CP0InputTypes.h"
 #include "GameFramework/Character.h"
 #include "CP0Character.generated.h"
 
 UCLASS()
-class CP0_API ACP0Character : public ACharacter
+class CP0_API ACP0Character final : public ACharacter
 {
     GENERATED_BODY()
 
