@@ -24,4 +24,9 @@ private:
 	void MoveRight(float AxisValue);
 	void Turn(float AxisValue);
 	void LookUp(float AxisValue);
+
+	void SprintPressed();
+	void SprintReleased();
+
+	bool bWantsSprint;
 };
