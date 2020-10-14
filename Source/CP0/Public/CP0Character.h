@@ -2,31 +2,30 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "CP0Character.generated.h"
 
 UCLASS()
 class CP0_API ACP0Character : public ACharacter
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
-public:
-	ACP0Character();
+  public:
+    ACP0Character(const FObjectInitializer& ObjectInitializer);
 
-protected:
-	void BeginPlay() override;
-	void Tick(float DeltaTime) override;
-	void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
+  protected:
+    void BeginPlay() override;
+    void Tick(float DeltaTime) override;
+    void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
-private:
-	void MoveForward(float AxisValue);
-	void MoveRight(float AxisValue);
-	void Turn(float AxisValue);
-	void LookUp(float AxisValue);
+  private:
+    void MoveForward(float AxisValue);
+    void MoveRight(float AxisValue);
+    void Turn(float AxisValue);
+    void LookUp(float AxisValue);
 
-	void SprintPressed();
-	void SprintReleased();
+    void SprintPressed();
+    void SprintReleased();
 
-	bool bWantsSprint;
+    bool bWantsSprint;
 };
