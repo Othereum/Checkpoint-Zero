@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "DataTypes/CP0InputTypes.h"
 #include "GameFramework/Character.h"
 #include "CP0Character.generated.h"
 
@@ -24,9 +23,4 @@ class CP0_API ACP0Character final : public ACharacter
     void MoveRight(float AxisValue);
     void Turn(float AxisValue);
     void LookUp(float AxisValue);
-
-    void SprintPressed();
-    void SprintReleased();
-
-    bool bWantsSprint;
 };
