@@ -9,12 +9,14 @@ template <class UserClass, class ActionType>
 void BindInputAction(UInputComponent* Input, FName ActionName, UserClass* Object, ActionType&& Action)
 {
     FInputActionBinding Pressed{ActionName, IE_Pressed};
-    Pressed.ActionDelegate.GetDelegateForManualSet().BindWeakLambda(Object, [=, LastTime = -1.0f] mutable {
+    Pressed.ActionDelegate.GetDelegateForManualSet().BindWeakLambda(Object, [=, LastTime = -1.0f]() mutable {
         const auto GI = CastChecked<UCP0GameInstance>(Object->GetGameInstance());
         const auto Settings = GI->GetInputSettings();
 
-        switch (Settings->PressTypes[Action])
+        switch (Settings->PressTypes[ActionName])
         {
+            float CurTime;
+
         case EPressType::Press:
             Action.Toggle(Object);
             break;
@@ -24,7 +26,8 @@ void BindInputAction(UInputComponent* Input, FName ActionName, UserClass* Object
             break;
 
         case EPressType::DoubleClick:
-            if (const auto CurTime = GetGameTimeSinceCreation(); CurTime - LastTime <= Settings->DoubleClickTimeout)
+            CurTime = Object->GetGameTimeSinceCreation();
+            if (CurTime - LastTime <= Settings->DoubleClickTimeout)
             {
                 Action.Toggle(Object);
                 LastTime = -1.0f;
@@ -43,7 +46,7 @@ void BindInputAction(UInputComponent* Input, FName ActionName, UserClass* Object
         const auto GI = CastChecked<UCP0GameInstance>(Object->GetGameInstance());
         const auto Settings = GI->GetInputSettings();
 
-        switch (Settings->PressTypes[Action])
+        switch (Settings->PressTypes[ActionName])
         {
         case EPressType::Release:
             Action.Toggle(Object);
