@@ -6,7 +6,7 @@
 #include "CP0InputSettings.generated.h"
 
 UENUM(BlueprintType)
-enum class EPressType
+enum class EPressType : uint8
 {
     Press,
     Release,
