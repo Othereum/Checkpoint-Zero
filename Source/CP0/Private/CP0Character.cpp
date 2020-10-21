@@ -5,61 +5,6 @@
 #include "CP0GameInstance.h"
 #include "CP0InputSettings.h"
 
-template <class UserClass, class ActionType>
-void BindInputAction(UInputComponent* Input, FName ActionName, UserClass* Object, ActionType&& Action)
-{
-    FInputActionBinding Pressed{ActionName, IE_Pressed};
-    Pressed.ActionDelegate.GetDelegateForManualSet().BindWeakLambda(Object, [=, LastTime = -1.0f]() mutable {
-        const auto GI = CastChecked<UCP0GameInstance>(Object->GetGameInstance());
-        const auto Settings = GI->GetInputSettings();
-
-        switch (Settings->PressTypes[ActionName])
-        {
-            float CurTime;
-
-        case EPressType::Press:
-            Action.Toggle(Object);
-            break;
-
-        case EPressType::Continuous:
-            Action.Enable(Object);
-            break;
-
-        case EPressType::DoubleClick:
-            CurTime = Object->GetGameTimeSinceCreation();
-            if (CurTime - LastTime <= Settings->DoubleClickTimeout)
-            {
-                Action.Toggle(Object);
-                LastTime = -1.0f;
-            }
-            else
-            {
-                LastTime = CurTime;
-            }
-            break;
-        }
-    });
-    Input->AddActionBinding(MoveTemp(Pressed));
-
-    FInputActionBinding Released{ActionName, IE_Released};
-    Released.ActionDelegate.GetDelegateForManualSet().BindWeakLambda(Object, [=] {
-        const auto GI = CastChecked<UCP0GameInstance>(Object->GetGameInstance());
-        const auto Settings = GI->GetInputSettings();
-
-        switch (Settings->PressTypes[ActionName])
-        {
-        case EPressType::Release:
-            Action.Toggle(Object);
-            break;
-
-        case EPressType::Continuous:
-            Action.Disable(Object);
-            break;
-        }
-    });
-    Input->AddActionBinding(MoveTemp(Released));
-}
-
 ACP0Character::ACP0Character(const FObjectInitializer& ObjectInitializer)
     : Super(
           ObjectInitializer.SetDefaultSubobjectClass<UCP0CharacterMovement>(ACharacter::CharacterMovementComponentName))
@@ -77,21 +22,6 @@ void ACP0Character::Tick(float DeltaTime)
     Super::Tick(DeltaTime);
 }
 
-struct FSprintAction
-{
-    void Enable(ACP0Character* Character) const
-    {
-    }
-
-    void Disable(ACP0Character* Character) const
-    {
-    }
-
-    void Toggle(ACP0Character* Character) const
-    {
-    }
-};
-
 void ACP0Character::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
     Super::SetupPlayerInputComponent(PlayerInputComponent);
@@ -101,7 +31,7 @@ void ACP0Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
     PlayerInputComponent->BindAxis(TEXT("Turn"), this, &ACP0Character::Turn);
     PlayerInputComponent->BindAxis(TEXT("LookUp"), this, &ACP0Character::LookUp);
 
-    BindInputAction(PlayerInputComponent, TEXT("Sprint"), this, FSprintAction{});
+    GetCP0CharacterMovement()->SetupPlayerInputComponent(PlayerInputComponent);
 }
 
 void ACP0Character::MoveForward(float AxisValue)

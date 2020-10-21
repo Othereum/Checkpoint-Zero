@@ -5,6 +5,8 @@
 #include "GameFramework/Character.h"
 #include "CP0Character.generated.h"
 
+class UCP0CharacterMovement;
+
 UCLASS()
 class CP0_API ACP0Character final : public ACharacter
 {
@@ -12,6 +14,11 @@ class CP0_API ACP0Character final : public ACharacter
 
   public:
     ACP0Character(const FObjectInitializer& ObjectInitializer);
+
+    [[nodiscard]] auto GetCP0CharacterMovement() const
+    {
+        return CastChecked<UCP0CharacterMovement>(GetCharacterMovement());
+    }
 
   protected:
     void BeginPlay() override;
