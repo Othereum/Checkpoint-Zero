@@ -1,4 +1,4 @@
-// © 2020 Seokjin Lee <seokjin.dev@gmail.com>
+// (C) 2020 Seokjin Lee <seokjin.dev@gmail.com>
 
 using UnrealBuildTool;
 using System.Collections.Generic;
