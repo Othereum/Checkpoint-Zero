@@ -5,21 +5,6 @@
 
 // TODO: 이 코드는 아예 서버에서 실행되는 게 나을 것 같다
 // BindInputAction을 Character로 다시 옮기고, 이 코드가 서버에서 호출되도록 만들자
-struct FSprintAction
-{
-    void Enable(UCP0CharacterMovement* Movement) const
-    {
-    }
-
-    void Disable(UCP0CharacterMovement* Movement) const
-    {
-    }
-
-    void Toggle(UCP0CharacterMovement* Movement) const
-    {
-    }
-};
-
 void UCP0CharacterMovement::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
     BindInputAction(PlayerInputComponent, TEXT("Sprint"), this, FSprintAction{});

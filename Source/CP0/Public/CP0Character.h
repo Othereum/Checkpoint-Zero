@@ -30,4 +30,13 @@ class CP0_API ACP0Character final : public ACharacter
     void MoveRight(float AxisValue);
     void Turn(float AxisValue);
     void LookUp(float AxisValue);
+
+    UFUNCTION(Server, Reliable, WithValidation)
+    void SprintEnable();
+
+    UFUNCTION(Server, Reliable, WithValidation)
+    void SprintDisable();
+
+    UFUNCTION(Server, Reliable, WithValidation)
+    void SprintToggle();
 };

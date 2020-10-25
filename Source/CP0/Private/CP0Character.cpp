@@ -5,6 +5,60 @@
 #include "CP0GameInstance.h"
 #include "CP0InputSettings.h"
 
+template <class UserClass, class ActionType>
+void BindInputAction(UInputComponent* Input, FName ActionName, UserClass* Object, ActionType&& Action)
+{
+    FInputActionBinding Pressed{ActionName, IE_Pressed};
+    Pressed.ActionDelegate.GetDelegateForManualSet().BindWeakLambda(Object, [=, LastTime = -1.0f]() mutable {
+        const auto GI = CastChecked<UCP0GameInstance>(Object->GetGameInstance());
+        const auto Settings = GI->GetInputSettings();
+
+        switch (Settings->PressTypes[ActionName])
+        {
+        case EPressType::Press:
+            Action.Toggle(Object);
+            break;
+
+        case EPressType::Continuous:
+            Action.Enable(Object);
+            break;
+
+        case EPressType::DoubleClick: {
+            const auto CurTime = Object->GetGameTimeSinceCreation();
+            if (CurTime - LastTime <= Settings->DoubleClickTimeout)
+            {
+                Action.Toggle(Object);
+                LastTime = -1.0f;
+            }
+            else
+            {
+                LastTime = CurTime;
+            }
+            break;
+        }
+        }
+    });
+    Input->AddActionBinding(MoveTemp(Pressed));
+
+    FInputActionBinding Released{ActionName, IE_Released};
+    Released.ActionDelegate.GetDelegateForManualSet().BindWeakLambda(Object, [=] {
+        const auto GI = CastChecked<UCP0GameInstance>(Object->GetGameInstance());
+        const auto Settings = GI->GetInputSettings();
+
+        switch (Settings->PressTypes[ActionName])
+        {
+        case EPressType::Release:
+            Action.Toggle(Object);
+            break;
+
+        case EPressType::Continuous:
+            Action.Disable(Object);
+            break;
+        }
+    });
+    Input->AddActionBinding(MoveTemp(Released));
+}
+
 ACP0Character::ACP0Character(const FObjectInitializer& ObjectInitializer)
     : Super(
           ObjectInitializer.SetDefaultSubobjectClass<UCP0CharacterMovement>(ACharacter::CharacterMovementComponentName))
@@ -52,4 +106,34 @@ void ACP0Character::Turn(float AxisValue)
 void ACP0Character::LookUp(float AxisValue)
 {
     AddControllerPitchInput(AxisValue);
+}
+
+void ACP0Character::SprintEnable_Implementation()
+{
+    GetCP0CharacterMovement()->EnableSprint();
+}
+
+void ACP0Character::SprintDisable_Implementation()
+{
+    GetCP0CharacterMovement()->DisableSprint();
+}
+
+void ACP0Character::SprintToggle_Implementation()
+{
+    GetCP0CharacterMovement()->ToggleSprint();
+}
+
+bool ACP0Character::SprintEnable_Validation()
+{
+    return true;
+}
+
+bool ACP0Character::SprintDisable_Validation()
+{
+    return true;
+}
+
+bool ACP0Character::SprintToggle_Validation()
+{
+    return true;
 }

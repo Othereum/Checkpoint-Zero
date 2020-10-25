@@ -17,4 +17,8 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
 
   public:
     void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent);
+
+    void EnableSprint();
+    void DisableSprint();
+    void ToggleSprint();
 };
