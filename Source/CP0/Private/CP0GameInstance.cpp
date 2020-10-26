@@ -3,6 +3,6 @@
 #include "CP0GameInstance.h"
 #include "CP0InputSettings.h"
 
-UCP0GameInstance::UCP0GameInstance() : InputSettings{NewObject<UCP0InputSettings>(this)}
+UCP0GameInstance::UCP0GameInstance() : InputSettings{CreateDefaultSubobject<UCP0InputSettings>(TEXT("InputSettings"))}
 {
 }
