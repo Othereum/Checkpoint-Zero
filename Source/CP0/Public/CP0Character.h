@@ -15,31 +15,32 @@ enum class EInputAction : uint8
     Toggle
 };
 
-UCLASS() class CP0_API ACP0Character final : public ACharacter
+UCLASS()
+class CP0_API ACP0Character final : public ACharacter
 {
     GENERATED_BODY()
 
   public:
-    ACP0Character(const FObjectInitializer& initializer);
+    ACP0Character(const FObjectInitializer& Initializer);
     [[nodiscard]] UCP0CharacterMovement* GetCP0Movement() const;
 
   protected:
     void BeginPlay() override;
-    void Tick(float deltaTime) override;
-    void SetupPlayerInputComponent(UInputComponent* inputComp) override;
+    void Tick(float DeltaTime) override;
+    void SetupPlayerInputComponent(UInputComponent* InputComp) override;
 
   private:
-    void MoveForward(float axisValue);
-    void MoveRight(float axisValue);
-    void Turn(float axisValue);
-    void LookUp(float axisValue);
+    void MoveForward(float AxisValue);
+    void MoveRight(float AxisValue);
+    void Turn(float AxisValue);
+    void LookUp(float AxisValue);
 
     template <class Action>
-    void BindInputAction(UInputComponent* input, FName name);
-    void DispatchInputAction(FName name, EInputAction type);
+    void BindInputAction(UInputComponent* Input, FName Name);
+    void DispatchInputAction(FName Name, EInputAction Type);
 
     UFUNCTION(Server, Reliable, WithValidation)
-    void ServerInputAction(FName name, EInputAction type);
+    void ServerInputAction(FName Name, EInputAction Type);
 
-    TMap<FName, void (*)(ACP0Character*, EInputAction)> inputActionMap_;
+    TMap<FName, void (*)(ACP0Character*, EInputAction)> InputActionMap;
 };

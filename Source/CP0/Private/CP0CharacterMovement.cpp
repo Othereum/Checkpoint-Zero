@@ -3,14 +3,14 @@
 #include "CP0CharacterMovement.h"
 #include "CP0Character.h"
 
-void FSprintAction::Enable(ACP0Character* character)
+void FSprintAction::Enable(ACP0Character* Character)
 {
 }
 
-void FSprintAction::Disable(ACP0Character* character)
+void FSprintAction::Disable(ACP0Character* Character)
 {
 }
 
-void FSprintAction::Toggle(ACP0Character* character)
+void FSprintAction::Toggle(ACP0Character* Character)
 {
 }

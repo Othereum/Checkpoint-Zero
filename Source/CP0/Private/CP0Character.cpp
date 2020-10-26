@@ -6,8 +6,8 @@
 #include "CP0GameInstance.h"
 #include "CP0InputSettings.h"
 
-ACP0Character::ACP0Character(const FObjectInitializer& initializer)
-    : Super{initializer.SetDefaultSubobjectClass<UCP0CharacterMovement>(ACharacter::CharacterMovementComponentName)}
+ACP0Character::ACP0Character(const FObjectInitializer& Initializer)
+    : Super{Initializer.SetDefaultSubobjectClass<UCP0CharacterMovement>(ACharacter::CharacterMovementComponentName)}
 {
     PrimaryActorTick.bCanEverTick = true;
 }
@@ -22,58 +22,58 @@ void ACP0Character::BeginPlay()
     Super::BeginPlay();
 }
 
-void ACP0Character::Tick(float deltaTime)
+void ACP0Character::Tick(float DeltaTime)
 {
-    Super::Tick(deltaTime);
+    Super::Tick(DeltaTime);
 }
 
-void ACP0Character::SetupPlayerInputComponent(UInputComponent* input)
+void ACP0Character::SetupPlayerInputComponent(UInputComponent* Input)
 {
-    Super::SetupPlayerInputComponent(input);
+    Super::SetupPlayerInputComponent(Input);
 
-    input->BindAxis(TEXT("MoveForward"), this, &ACP0Character::MoveForward);
-    input->BindAxis(TEXT("MoveRight"), this, &ACP0Character::MoveRight);
-    input->BindAxis(TEXT("Turn"), this, &ACP0Character::Turn);
-    input->BindAxis(TEXT("LookUp"), this, &ACP0Character::LookUp);
+    Input->BindAxis(TEXT("MoveForward"), this, &ACP0Character::MoveForward);
+    Input->BindAxis(TEXT("MoveRight"), this, &ACP0Character::MoveRight);
+    Input->BindAxis(TEXT("Turn"), this, &ACP0Character::Turn);
+    Input->BindAxis(TEXT("LookUp"), this, &ACP0Character::LookUp);
 
-    BindInputAction<FSprintAction>(input, TEXT("Sprint"));
+    BindInputAction<FSprintAction>(Input, TEXT("Sprint"));
 }
 
-void ACP0Character::MoveForward(float axisValue)
+void ACP0Character::MoveForward(float AxisValue)
 {
-    AddMovementInput(GetActorForwardVector(), axisValue);
+    AddMovementInput(GetActorForwardVector(), AxisValue);
 }
 
-void ACP0Character::MoveRight(float axisValue)
+void ACP0Character::MoveRight(float AxisValue)
 {
-    AddMovementInput(GetActorRightVector(), axisValue);
+    AddMovementInput(GetActorRightVector(), AxisValue);
 }
 
-void ACP0Character::Turn(float axisValue)
+void ACP0Character::Turn(float AxisValue)
 {
-    AddControllerYawInput(axisValue);
+    AddControllerYawInput(AxisValue);
 }
 
-void ACP0Character::LookUp(float axisValue)
+void ACP0Character::LookUp(float AxisValue)
 {
-    AddControllerPitchInput(axisValue);
+    AddControllerPitchInput(AxisValue);
 }
 
-void ACP0Character::DispatchInputAction(FName name, EInputAction type)
+void ACP0Character::DispatchInputAction(FName Name, EInputAction Type)
 {
-    const auto dispatcher = inputActionMap_.Find(name);
+    const auto dispatcher = InputActionMap.Find(Name);
     if (ensure(dispatcher))
     {
-        (*dispatcher)(this, type);
+        (*dispatcher)(this, Type);
     }
 
     if (IsLocallyControlled())
-        ServerInputAction(name, type);
+        ServerInputAction(Name, Type);
 }
 
-void ACP0Character::ServerInputAction_Implementation(FName name, EInputAction type)
+void ACP0Character::ServerInputAction_Implementation(FName Name, EInputAction Type)
 {
-    DispatchInputAction(name, type);
+    DispatchInputAction(Name, Type);
 }
 
 bool ACP0Character::ServerInputAction_Validate(FName Name, EInputAction Type)

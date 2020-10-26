@@ -22,7 +22,7 @@ static void DispatchInputAction(ACP0Character* character, EInputAction type)
 template <class Action>
 void ACP0Character::BindInputAction(UInputComponent* input, FName name)
 {
-    inputActionMap_.Add(name, &::DispatchInputAction<Action>);
+    InputActionMap.Add(name, &::DispatchInputAction<Action>);
 
     FInputActionBinding pressed{name, IE_Pressed};
     pressed.ActionDelegate.GetDelegateForManualSet().BindWeakLambda(this, [=, lastTime = -1.0f]() mutable {

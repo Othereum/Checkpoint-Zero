@@ -9,9 +9,9 @@ class ACP0Character;
 
 struct CP0_API FSprintAction
 {
-    static void Enable(ACP0Character* character);
-    static void Disable(ACP0Character* character);
-    static void Toggle(ACP0Character* character);
+    static void Enable(ACP0Character* Character);
+    static void Disable(ACP0Character* Character);
+    static void Toggle(ACP0Character* Character);
 };
 
 /**
