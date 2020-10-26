@@ -7,6 +7,13 @@
 
 class ACP0Character;
 
+struct CP0_API FSprintAction
+{
+    static void Enable(ACP0Character* character);
+    static void Disable(ACP0Character* character);
+    static void Toggle(ACP0Character* character);
+};
+
 /**
  *
  */
@@ -16,9 +23,4 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     GENERATED_BODY()
 
   public:
-    void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent);
-
-    void EnableSprint();
-    void DisableSprint();
-    void ToggleSprint();
 };

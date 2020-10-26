@@ -1,69 +1,20 @@
 // (C) 2020 Seokjin Lee <seokjin.dev@gmail.com>
 
 #include "CP0Character.h"
+#include "CP0Character.inl"
 #include "CP0CharacterMovement.h"
 #include "CP0GameInstance.h"
 #include "CP0InputSettings.h"
 
-template <class UserClass, class ActionType>
-void BindInputAction(UInputComponent* Input, FName ActionName, UserClass* Object, ActionType&& Action)
-{
-    FInputActionBinding Pressed{ActionName, IE_Pressed};
-    Pressed.ActionDelegate.GetDelegateForManualSet().BindWeakLambda(Object, [=, LastTime = -1.0f]() mutable {
-        const auto GI = CastChecked<UCP0GameInstance>(Object->GetGameInstance());
-        const auto Settings = GI->GetInputSettings();
-
-        switch (Settings->PressTypes[ActionName])
-        {
-        case EPressType::Press:
-            Action.Toggle(Object);
-            break;
-
-        case EPressType::Continuous:
-            Action.Enable(Object);
-            break;
-
-        case EPressType::DoubleClick: {
-            const auto CurTime = Object->GetGameTimeSinceCreation();
-            if (CurTime - LastTime <= Settings->DoubleClickTimeout)
-            {
-                Action.Toggle(Object);
-                LastTime = -1.0f;
-            }
-            else
-            {
-                LastTime = CurTime;
-            }
-            break;
-        }
-        }
-    });
-    Input->AddActionBinding(MoveTemp(Pressed));
-
-    FInputActionBinding Released{ActionName, IE_Released};
-    Released.ActionDelegate.GetDelegateForManualSet().BindWeakLambda(Object, [=] {
-        const auto GI = CastChecked<UCP0GameInstance>(Object->GetGameInstance());
-        const auto Settings = GI->GetInputSettings();
-
-        switch (Settings->PressTypes[ActionName])
-        {
-        case EPressType::Release:
-            Action.Toggle(Object);
-            break;
-
-        case EPressType::Continuous:
-            Action.Disable(Object);
-            break;
-        }
-    });
-    Input->AddActionBinding(MoveTemp(Released));
-}
-
-ACP0Character::ACP0Character(const FObjectInitializer& ObjectInitializer)
-    : Super(
-          ObjectInitializer.SetDefaultSubobjectClass<UCP0CharacterMovement>(ACharacter::CharacterMovementComponentName))
+ACP0Character::ACP0Character(const FObjectInitializer& initializer)
+    : Super{initializer.SetDefaultSubobjectClass<UCP0CharacterMovement>(ACharacter::CharacterMovementComponentName)}
 {
     PrimaryActorTick.bCanEverTick = true;
+}
+
+UCP0CharacterMovement* ACP0Character::GetCP0Movement() const
+{
+    return CastChecked<UCP0CharacterMovement>(GetCharacterMovement());
 }
 
 void ACP0Character::BeginPlay()
@@ -71,69 +22,61 @@ void ACP0Character::BeginPlay()
     Super::BeginPlay();
 }
 
-void ACP0Character::Tick(float DeltaTime)
+void ACP0Character::Tick(float deltaTime)
 {
-    Super::Tick(DeltaTime);
+    Super::Tick(deltaTime);
 }
 
-void ACP0Character::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void ACP0Character::SetupPlayerInputComponent(UInputComponent* input)
 {
-    Super::SetupPlayerInputComponent(PlayerInputComponent);
+    Super::SetupPlayerInputComponent(input);
 
-    PlayerInputComponent->BindAxis(TEXT("MoveForward"), this, &ACP0Character::MoveForward);
-    PlayerInputComponent->BindAxis(TEXT("MoveRight"), this, &ACP0Character::MoveRight);
-    PlayerInputComponent->BindAxis(TEXT("Turn"), this, &ACP0Character::Turn);
-    PlayerInputComponent->BindAxis(TEXT("LookUp"), this, &ACP0Character::LookUp);
+    input->BindAxis(TEXT("MoveForward"), this, &ACP0Character::MoveForward);
+    input->BindAxis(TEXT("MoveRight"), this, &ACP0Character::MoveRight);
+    input->BindAxis(TEXT("Turn"), this, &ACP0Character::Turn);
+    input->BindAxis(TEXT("LookUp"), this, &ACP0Character::LookUp);
 
-    GetCP0CharacterMovement()->SetupPlayerInputComponent(PlayerInputComponent);
+    BindInputAction<FSprintAction>(input, TEXT("Sprint"));
 }
 
-void ACP0Character::MoveForward(float AxisValue)
+void ACP0Character::MoveForward(float axisValue)
 {
-    AddMovementInput(GetActorForwardVector(), AxisValue);
+    AddMovementInput(GetActorForwardVector(), axisValue);
 }
 
-void ACP0Character::MoveRight(float AxisValue)
+void ACP0Character::MoveRight(float axisValue)
 {
-    AddMovementInput(GetActorRightVector(), AxisValue);
+    AddMovementInput(GetActorRightVector(), axisValue);
 }
 
-void ACP0Character::Turn(float AxisValue)
+void ACP0Character::Turn(float axisValue)
 {
-    AddControllerYawInput(AxisValue);
+    AddControllerYawInput(axisValue);
 }
 
-void ACP0Character::LookUp(float AxisValue)
+void ACP0Character::LookUp(float axisValue)
 {
-    AddControllerPitchInput(AxisValue);
+    AddControllerPitchInput(axisValue);
 }
 
-void ACP0Character::SprintEnable_Implementation()
+void ACP0Character::DispatchInputAction(FName name, EInputAction type)
 {
-    GetCP0CharacterMovement()->EnableSprint();
+    const auto dispatcher = inputActionMap_.Find(name);
+    if (ensure(dispatcher))
+    {
+        (*dispatcher)(this, type);
+    }
+
+    if (IsLocallyControlled())
+        ServerInputAction(name, type);
 }
 
-void ACP0Character::SprintDisable_Implementation()
+void ACP0Character::ServerInputAction_Implementation(FName name, EInputAction type)
 {
-    GetCP0CharacterMovement()->DisableSprint();
+    DispatchInputAction(name, type);
 }
 
-void ACP0Character::SprintToggle_Implementation()
-{
-    GetCP0CharacterMovement()->ToggleSprint();
-}
-
-bool ACP0Character::SprintEnable_Validation()
-{
-    return true;
-}
-
-bool ACP0Character::SprintDisable_Validation()
-{
-    return true;
-}
-
-bool ACP0Character::SprintToggle_Validation()
+bool ACP0Character::ServerInputAction_Validate(FName Name, EInputAction Type)
 {
     return true;
 }

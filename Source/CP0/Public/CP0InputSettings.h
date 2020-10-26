@@ -24,8 +24,8 @@ class CP0_API UCP0InputSettings final : public UCP0Settings
 
   public:
     UPROPERTY(Config, BlueprintReadWrite)
-    float DoubleClickTimeout = 0.3;
+    float doubleClickTimeout = 0.3;
 
     UPROPERTY(Config, BlueprintReadWrite)
-    TMap<FName, EPressType> PressTypes;
+    TMap<FName, EPressType> pressTypes;
 };

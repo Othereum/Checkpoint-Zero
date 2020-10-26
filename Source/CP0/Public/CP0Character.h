@@ -7,36 +7,39 @@
 
 class UCP0CharacterMovement;
 
-UCLASS()
-class CP0_API ACP0Character final : public ACharacter
+UENUM()
+enum class EInputAction : uint8
+{
+    Enable,
+    Disable,
+    Toggle
+};
+
+UCLASS() class CP0_API ACP0Character final : public ACharacter
 {
     GENERATED_BODY()
 
   public:
-    ACP0Character(const FObjectInitializer& ObjectInitializer);
-
-    [[nodiscard]] auto GetCP0CharacterMovement() const
-    {
-        return CastChecked<UCP0CharacterMovement>(GetCharacterMovement());
-    }
+    ACP0Character(const FObjectInitializer& initializer);
+    [[nodiscard]] UCP0CharacterMovement* GetCP0Movement() const;
 
   protected:
     void BeginPlay() override;
-    void Tick(float DeltaTime) override;
-    void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
+    void Tick(float deltaTime) override;
+    void SetupPlayerInputComponent(UInputComponent* inputComp) override;
 
   private:
-    void MoveForward(float AxisValue);
-    void MoveRight(float AxisValue);
-    void Turn(float AxisValue);
-    void LookUp(float AxisValue);
+    void MoveForward(float axisValue);
+    void MoveRight(float axisValue);
+    void Turn(float axisValue);
+    void LookUp(float axisValue);
+
+    template <class Action>
+    void BindInputAction(UInputComponent* input, FName name);
+    void DispatchInputAction(FName name, EInputAction type);
 
     UFUNCTION(Server, Reliable, WithValidation)
-    void SprintEnable();
+    void ServerInputAction(FName name, EInputAction type);
 
-    UFUNCTION(Server, Reliable, WithValidation)
-    void SprintDisable();
-
-    UFUNCTION(Server, Reliable, WithValidation)
-    void SprintToggle();
+    TMap<FName, void (*)(ACP0Character*, EInputAction)> inputActionMap_;
 };
