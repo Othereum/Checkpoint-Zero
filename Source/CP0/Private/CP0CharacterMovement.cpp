@@ -5,12 +5,15 @@
 
 void FSprintAction::Enable(ACP0Character* Character)
 {
+    Character->bIsSprinting = true;
 }
 
 void FSprintAction::Disable(ACP0Character* Character)
 {
+    Character->bIsSprinting = false;
 }
 
 void FSprintAction::Toggle(ACP0Character* Character)
 {
+    Character->bIsSprinting = !Character->bIsSprinting;
 }

@@ -28,19 +28,28 @@ class CP0_API ACP0Character final : public ACharacter
     void BeginPlay() override;
     void Tick(float DeltaTime) override;
     void SetupPlayerInputComponent(UInputComponent* InputComp) override;
+    void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
   private:
+    friend struct FSprintAction;
+
     void MoveForward(float AxisValue);
     void MoveRight(float AxisValue);
     void Turn(float AxisValue);
     void LookUp(float AxisValue);
 
     template <class Action>
-    void BindInputAction(UInputComponent* Input, FName Name);
-    void DispatchInputAction(FName Name, EInputAction Type);
+    void RegisterInputAction(FName Name);
 
     UFUNCTION(Server, Reliable, WithValidation)
     void ServerInputAction(FName Name, EInputAction Type);
 
+    void RegisterInputActions();
+    void DispatchInputAction(FName Name, EInputAction Type);
+    void BindInputAction(UInputComponent* Input, FName Name);
+
     TMap<FName, void (*)(ACP0Character*, EInputAction)> InputActionMap;
+
+    UPROPERTY(Replicated, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+    bool bIsSprinting;
 };

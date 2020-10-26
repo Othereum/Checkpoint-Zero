@@ -3,13 +3,13 @@
 #include "CP0Character.h"
 #include "CP0Character.inl"
 #include "CP0CharacterMovement.h"
-#include "CP0GameInstance.h"
-#include "CP0InputSettings.h"
+#include "Net/UnrealNetwork.h"
 
 ACP0Character::ACP0Character(const FObjectInitializer& Initializer)
     : Super{Initializer.SetDefaultSubobjectClass<UCP0CharacterMovement>(ACharacter::CharacterMovementComponentName)}
 {
     PrimaryActorTick.bCanEverTick = true;
+    RegisterInputActions();
 }
 
 UCP0CharacterMovement* ACP0Character::GetCP0Movement() const
@@ -36,7 +36,14 @@ void ACP0Character::SetupPlayerInputComponent(UInputComponent* Input)
     Input->BindAxis(TEXT("Turn"), this, &ACP0Character::Turn);
     Input->BindAxis(TEXT("LookUp"), this, &ACP0Character::LookUp);
 
-    BindInputAction<FSprintAction>(Input, TEXT("Sprint"));
+    BindInputAction(Input, TEXT("Sprint"));
+}
+
+void ACP0Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+    DOREPLIFETIME_CONDITION(ACP0Character, bIsSprinting, COND_SkipOwner);
 }
 
 void ACP0Character::MoveForward(float AxisValue)
@@ -59,24 +66,8 @@ void ACP0Character::LookUp(float AxisValue)
     AddControllerPitchInput(AxisValue);
 }
 
-void ACP0Character::DispatchInputAction(FName Name, EInputAction Type)
+void ACP0Character::RegisterInputActions()
 {
-    const auto dispatcher = InputActionMap.Find(Name);
-    if (ensure(dispatcher))
-    {
-        (*dispatcher)(this, Type);
-    }
-
-    if (IsLocallyControlled())
-        ServerInputAction(Name, Type);
+    RegisterInputAction<FSprintAction>(TEXT("Sprint"));
 }
 
-void ACP0Character::ServerInputAction_Implementation(FName Name, EInputAction Type)
-{
-    DispatchInputAction(Name, Type);
-}
-
-bool ACP0Character::ServerInputAction_Validate(FName Name, EInputAction Type)
-{
-    return true;
-}
