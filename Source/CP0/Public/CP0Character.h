@@ -33,10 +33,9 @@ class CP0_API ACP0Character final : public ACharacter
   private:
     friend struct FSprintAction;
 
-    void MoveForward(float AxisValue);
-    void MoveRight(float AxisValue);
-    void Turn(float AxisValue);
-    void LookUp(float AxisValue);
+    void RegisterInputActions();
+    void DispatchInputAction(FName Name, EInputAction Type);
+    void BindInputAction(UInputComponent* Input, FName Name);
 
     template <class Action>
     void RegisterInputAction(FName Name);
@@ -44,12 +43,10 @@ class CP0_API ACP0Character final : public ACharacter
     UFUNCTION(Server, Reliable, WithValidation)
     void ServerInputAction(FName Name, EInputAction Type);
 
-    void RegisterInputActions();
-    void DispatchInputAction(FName Name, EInputAction Type);
-    void BindInputAction(UInputComponent* Input, FName Name);
+    void MoveForward(float AxisValue);
+    void MoveRight(float AxisValue);
+    void Turn(float AxisValue);
+    void LookUp(float AxisValue);
 
     TMap<FName, void (*)(ACP0Character*, EInputAction)> InputActionMap;
-
-    UPROPERTY(Replicated, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-    bool bIsSprinting;
 };

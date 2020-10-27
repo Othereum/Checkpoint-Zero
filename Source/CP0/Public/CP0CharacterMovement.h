@@ -7,13 +7,6 @@
 
 class ACP0Character;
 
-struct CP0_API FSprintAction
-{
-    static void Enable(ACP0Character* Character);
-    static void Disable(ACP0Character* Character);
-    static void Toggle(ACP0Character* Character);
-};
-
 /**
  *
  */
@@ -23,4 +16,20 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     GENERATED_BODY()
 
   public:
+    UCP0CharacterMovement();
+
+  protected:
+    void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+  private:
+    UPROPERTY(Replicated, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+    bool bIsSprinting;
+};
+
+struct CP0_API FSprintAction
+{
+    [[nodiscard]] static UCP0CharacterMovement* GetObject(const ACP0Character* Character);
+    static void Enable(UCP0CharacterMovement* Movement);
+    static void Disable(UCP0CharacterMovement* Movement);
+    static void Toggle(UCP0CharacterMovement* Movement);
 };

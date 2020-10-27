@@ -2,18 +2,33 @@
 
 #include "CP0CharacterMovement.h"
 #include "CP0Character.h"
+#include "Net/UnrealNetwork.h"
 
-void FSprintAction::Enable(ACP0Character* Character)
+UCP0CharacterMovement* FSprintAction::GetObject(const ACP0Character* Character)
 {
-    Character->bIsSprinting = true;
+    return Character->GetCP0Movement();
 }
 
-void FSprintAction::Disable(ACP0Character* Character)
+void FSprintAction::Enable(UCP0CharacterMovement* Movement)
 {
-    Character->bIsSprinting = false;
 }
 
-void FSprintAction::Toggle(ACP0Character* Character)
+void FSprintAction::Disable(UCP0CharacterMovement* Movement)
 {
-    Character->bIsSprinting = !Character->bIsSprinting;
+}
+
+void FSprintAction::Toggle(UCP0CharacterMovement* Movement)
+{
+}
+
+UCP0CharacterMovement::UCP0CharacterMovement()
+{
+    SetIsReplicatedByDefault(true);
+}
+
+void UCP0CharacterMovement::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+    DOREPLIFETIME_CONDITION(UCP0CharacterMovement, bIsSprinting, COND_SkipOwner);
 }

@@ -1,7 +1,7 @@
 // (C) 2020 Seokjin Lee <seokjin.dev@gmail.com>
 
 #include "CP0Character.h"
-#include "CP0Character.inl"
+#include "CP0CharacterInput.inl"
 #include "CP0CharacterMovement.h"
 #include "Net/UnrealNetwork.h"
 
@@ -10,11 +10,6 @@ ACP0Character::ACP0Character(const FObjectInitializer& Initializer)
 {
     PrimaryActorTick.bCanEverTick = true;
     RegisterInputActions();
-}
-
-UCP0CharacterMovement* ACP0Character::GetCP0Movement() const
-{
-    return CastChecked<UCP0CharacterMovement>(GetCharacterMovement());
 }
 
 void ACP0Character::BeginPlay()
@@ -39,12 +34,17 @@ void ACP0Character::SetupPlayerInputComponent(UInputComponent* Input)
     BindInputAction(Input, TEXT("Sprint"));
 }
 
+void ACP0Character::RegisterInputActions()
+{
+    RegisterInputAction<FSprintAction>(TEXT("Sprint"));
+}
+
 void ACP0Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-    DOREPLIFETIME_CONDITION(ACP0Character, bIsSprinting, COND_SkipOwner);
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void ACP0Character::MoveForward(float AxisValue)
 {
@@ -66,8 +66,9 @@ void ACP0Character::LookUp(float AxisValue)
     AddControllerPitchInput(AxisValue);
 }
 
-void ACP0Character::RegisterInputActions()
-{
-    RegisterInputAction<FSprintAction>(TEXT("Sprint"));
-}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+UCP0CharacterMovement* ACP0Character::GetCP0Movement() const
+{
+    return CastChecked<UCP0CharacterMovement>(GetCharacterMovement());
+}
