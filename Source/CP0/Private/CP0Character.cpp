@@ -31,7 +31,10 @@ void ACP0Character::SetupPlayerInputComponent(UInputComponent* Input)
     Input->BindAxis(TEXT("Turn"), this, &ACP0Character::Turn);
     Input->BindAxis(TEXT("LookUp"), this, &ACP0Character::LookUp);
 
-    BindInputAction(Input, TEXT("Sprint"));
+    for (const auto& Action : InputActionMap)
+    {
+        BindInputAction(Input, Action.Key);
+    }
 }
 
 void ACP0Character::RegisterInputActions()
