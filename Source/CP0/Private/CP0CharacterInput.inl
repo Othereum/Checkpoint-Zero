@@ -43,7 +43,6 @@ void ACP0Character::RegisterInputAction(FName Name)
 
 void ACP0Character::ServerInputAction_Implementation(FName Name, EInputAction Type)
 {
-    const auto aa = sizeof(void&&);
     DispatchInputAction(Name, Type);
 }
 
