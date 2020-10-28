@@ -1,5 +1,6 @@
 // (C) 2020 Seokjin Lee <seokjin.dev@gmail.com>
 
+#include "CP0.h"
 #include "CP0GameInstance.h"
 #include "CP0InputSettings.h"
 
@@ -32,7 +33,7 @@ static void DispatchInputActionByType(ACP0Character* Character, EInputAction Typ
         Action::Toggle(GetActionObject<Action>(Character));
         break;
     default:
-        ensure(!"Enclosing block should never be called");
+        ensureNoEntry();
     }
 }
 

@@ -4,3 +4,4 @@
 
 #include "CoreMinimal.h"
 
+#define ensureNoEntry() ensure(!"Enclosing block should never be called")
