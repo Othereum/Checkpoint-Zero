@@ -10,8 +10,9 @@ template <class Action>
 }
 
 template <class Action>
-[[nodiscard]] static TEnableIf<TIsPointer<decltype(Action::Enable(DeclVal<ACP0Character*>()))*>::Value, ACP0Character*>
-GetActionObject(ACP0Character* Character)
+[[nodiscard]] static
+    typename TEnableIf<TIsPointer<decltype(Action::Enable(DeclVal<ACP0Character*>()))*>::Value, ACP0Character*>::Type
+    GetActionObject(ACP0Character* Character)
 {
     return Character;
 }
