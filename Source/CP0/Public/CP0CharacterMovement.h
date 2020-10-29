@@ -10,7 +10,9 @@ class ACP0Character;
 UENUM(BlueprintType)
 enum class ESprintSpeed : uint8
 {
-    Absolute, Relative, Multiply
+    Absolute,
+    Relative,
+    Multiply
 };
 
 /**
@@ -28,13 +30,20 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     [[nodiscard]] float GetSprintSpeed() const;
 
   protected:
+    void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
     void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
   private:
     friend struct FSprintAction;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, meta = (UIMin = 0))
     float SprintSpeed = 600.0f;
+
+    UPROPERTY(EditAnywhere, meta = (UIMin = -1, UIMax = 1))
+    float MaxSprintAngleCos = 0.5f;
+
+    UPROPERTY(EditAnywhere, meta = (UIMin = 0))
+    float MinSprintSpeed = 100.0f;
 
     UPROPERTY(EditAnywhere)
     ESprintSpeed SprintSpeedType = ESprintSpeed::Absolute;

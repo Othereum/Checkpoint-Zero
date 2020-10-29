@@ -38,6 +38,24 @@ float UCP0CharacterMovement::GetSprintSpeed() const
     }
 }
 
+void UCP0CharacterMovement::TickComponent(float DeltaTime, ELevelTick TickType,
+                                          FActorComponentTickFunction* ThisTickFunction)
+{
+    Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+    auto CanSprint = [this] {
+        if (Velocity.SizeSquared() < MinSprintSpeed)
+            return false;
+
+        const auto ViewDir = GetOwner()->GetActorForwardVector();
+        const auto VelDir = Velocity.GetUnsafeNormal();
+        return (ViewDir | VelDir) > MaxSprintAngleCos;
+    };
+    
+    if (!CanSprint())
+        bIsSprinting = false;
+}
+
 void UCP0CharacterMovement::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);

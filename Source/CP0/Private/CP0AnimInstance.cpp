@@ -11,7 +11,7 @@ void UCP0AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
     {
         const auto Velocity = Pawn->GetVelocity();
         MoveSpeed = Velocity.Size();
-        if (MoveSpeed > 1)
+        if (MoveSpeed > 1.0f)
         {
             MoveDirection = CalculateDirection(Velocity, Pawn->GetActorRotation());
         }
