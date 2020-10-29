@@ -29,6 +29,11 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     [[nodiscard]] float GetMaxSpeed() const override;
     [[nodiscard]] float GetSprintSpeed() const;
 
+    [[nodiscard]] bool IsSprinting() const
+    {
+        return bIsSprinting;
+    }
+
   protected:
     void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
     void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;

@@ -25,4 +25,7 @@ class CP0_API UCP0AnimInstance : public UAnimInstance
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     bool bIsOnGround = true;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+    bool bIsSprinting = false;
 };
