@@ -18,5 +18,5 @@ void UCP0AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
     const auto Movement = Character->GetCP0Movement();
     bIsOnGround = Movement->IsMovingOnGround();
-    bIsSprinting = Movement->IsSprinting();
+    bIsSprinting = Movement->IsSprinting() && MoveSpeed > MinSprintSpeed;
 }

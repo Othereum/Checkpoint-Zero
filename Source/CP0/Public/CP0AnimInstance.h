@@ -24,6 +24,9 @@ class CP0_API UCP0AnimInstance : public UAnimInstance
     float MoveDirection;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+    float MinSprintSpeed = 400.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     bool bIsOnGround = true;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
