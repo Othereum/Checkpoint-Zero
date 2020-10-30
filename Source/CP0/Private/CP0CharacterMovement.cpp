@@ -44,7 +44,7 @@ void UCP0CharacterMovement::TickComponent(float DeltaTime, ELevelTick TickType,
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
     auto CanSprint = [this] {
-        if (Velocity.SizeSquared() < MinSprintSpeed)
+        if (Velocity.SizeSquared() < MinSprintSpeed * MinSprintSpeed)
             return false;
 
         const auto ViewDir = GetOwner()->GetActorForwardVector();
