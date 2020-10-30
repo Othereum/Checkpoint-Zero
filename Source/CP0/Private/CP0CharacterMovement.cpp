@@ -16,10 +16,9 @@ float UCP0CharacterMovement::GetMaxSpeed() const
     {
     case MOVE_Walking:
     case MOVE_NavWalking:
-        return bIsSprinting ? GetSprintSpeed() : MaxWalkSpeed;
-    default:
-        return Super::GetMaxSpeed();
+        return IsSprinting() ? GetSprintSpeed() : MaxWalkSpeed;
     }
+    return Super::GetMaxSpeed();
 }
 
 float UCP0CharacterMovement::GetSprintSpeed() const
@@ -38,47 +37,95 @@ float UCP0CharacterMovement::GetSprintSpeed() const
     }
 }
 
+bool UCP0CharacterMovement::CanSprint() const
+{
+    if (Posture != EPosture::Stand)
+        return false;
+
+    if (Velocity.SizeSquared() < MinSprintSpeed * MinSprintSpeed)
+        return false;
+
+    const auto ViewDir = GetOwner()->GetActorForwardVector();
+    const auto VelDir = Velocity.GetUnsafeNormal();
+    if ((ViewDir | VelDir) < MaxSprintAngleCos)
+        return false;
+
+    return true;
+}
+
+bool UCP0CharacterMovement::TryStartSprint()
+{
+    if (!CanSprint())
+        return false;
+
+    bIsSprinting = true;
+    return true;
+}
+
 void UCP0CharacterMovement::TickComponent(float DeltaTime, ELevelTick TickType,
                                           FActorComponentTickFunction* ThisTickFunction)
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+    if (GetOwnerRole() == ROLE_SimulatedProxy)
+        return;
 
-    auto CanSprint = [this] {
-        if (Velocity.SizeSquared() < MinSprintSpeed * MinSprintSpeed)
-            return false;
-
-        const auto ViewDir = GetOwner()->GetActorForwardVector();
-        const auto VelDir = Velocity.GetUnsafeNormal();
-        return (ViewDir | VelDir) > MaxSprintAngleCos;
-    };
-    
-    if (!CanSprint())
-        bIsSprinting = false;
+    ProcessSprint();
 }
 
 void UCP0CharacterMovement::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
+    DOREPLIFETIME(UCP0CharacterMovement, Posture);
     DOREPLIFETIME(UCP0CharacterMovement, bIsSprinting);
 }
 
-UCP0CharacterMovement* FSprintAction::GetObject(ACP0Character* Character)
+void UCP0CharacterMovement::ProcessSprint()
+{
+    if (IsSprinting() && !CanSprint())
+        StopSprint();
+}
+
+UCP0CharacterMovement* FMovementActionBase::GetObject(ACP0Character* Character)
 {
     return Character->GetCP0Movement();
 }
 
 void FSprintAction::Enable(UCP0CharacterMovement* Movement)
 {
-    Movement->bIsSprinting = true;
+    Movement->TryStartSprint();
 }
 
 void FSprintAction::Disable(UCP0CharacterMovement* Movement)
 {
-    Movement->bIsSprinting = false;
+    Movement->StopSprint();
 }
 
 void FSprintAction::Toggle(UCP0CharacterMovement* Movement)
 {
-    Movement->bIsSprinting = !Movement->bIsSprinting;
+    Movement->IsSprinting() ? Movement->StopSprint() : Movement->TryStartSprint();
+}
+
+void FCrouchAction::Enable(UCP0CharacterMovement* Movement)
+{
+}
+
+void FCrouchAction::Disable(UCP0CharacterMovement* Movement)
+{
+}
+
+void FCrouchAction::Toggle(UCP0CharacterMovement* Movement)
+{
+}
+
+void FProneAction::Enable(UCP0CharacterMovement* Movement)
+{
+}
+
+void FProneAction::Disable(UCP0CharacterMovement* Movement)
+{
+}
+
+void FProneAction::Toggle(UCP0CharacterMovement* Movement)
+{
 }

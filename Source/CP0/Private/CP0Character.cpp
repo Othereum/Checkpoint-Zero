@@ -40,6 +40,8 @@ void ACP0Character::SetupPlayerInputComponent(UInputComponent* Input)
 void ACP0Character::RegisterInputActions()
 {
     RegisterInputAction<FSprintAction>(TEXT("Sprint"));
+    RegisterInputAction<FCrouchAction>(TEXT("Crouch"));
+    RegisterInputAction<FProneAction>(TEXT("Prone"));
 }
 
 void ACP0Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
