@@ -2,8 +2,11 @@
 
 #pragma once
 
+#include "CP0.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "CP0CharacterMovement.generated.h"
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPostureChanged, EPosture, Prev, EPosture, New);
 
 UENUM(BlueprintType)
 enum class ESprintSpeed : uint8
@@ -11,14 +14,6 @@ enum class ESprintSpeed : uint8
     Absolute,
     Relative,
     Multiply
-};
-
-UENUM(BlueprintType)
-enum class EPosture : uint8
-{
-    Stand,
-    Crouch,
-    Prone
 };
 
 /**
@@ -35,12 +30,15 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     float GetMaxSpeed() const override;
     float GetSprintSpeed() const;
 
-    EPosture GetPosture() const { return Posture; }
-
     bool IsSprinting() const { return bIsSprinting; }
     bool CanSprint() const;
     bool TryStartSprint();
     void StopSprint() { bIsSprinting = false; }
+
+    EPosture GetPosture() const { return Posture; }
+    bool TryStand();
+    bool TryCrouch();
+    bool TryProne();
 
   protected:
     void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -48,6 +46,12 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
 
   private:
     void ProcessSprint();
+
+    UFUNCTION()
+    void OnRep_Posture(EPosture Prev);
+
+    UPROPERTY(BlueprintAssignable)
+    FOnPostureChanged OnPostureChanged;
 
     UPROPERTY(EditAnywhere, meta = (UIMin = 0))
     float SprintSpeed = 600.0f;
@@ -61,7 +65,7 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     UPROPERTY(EditAnywhere)
     ESprintSpeed SprintSpeedType = ESprintSpeed::Absolute;
 
-    UPROPERTY(Replicated, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+    UPROPERTY(ReplicatedUsing = OnRep_Posture, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     EPosture Posture = EPosture::Stand;
 
     UPROPERTY(Replicated, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))

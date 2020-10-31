@@ -17,6 +17,7 @@ void UCP0AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
     MoveDirection = MoveSpeed > 1.0f ? CalculateDirection(Velocity, Character->GetActorRotation()) : 0.0f;
 
     const auto Movement = Character->GetCP0Movement();
+    Posture = Movement->GetPosture();
     bIsOnGround = Movement->IsMovingOnGround();
     bIsSprinting = Movement->IsSprinting() && MoveSpeed > MinSprintSpeed;
 }

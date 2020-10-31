@@ -62,6 +62,42 @@ bool UCP0CharacterMovement::TryStartSprint()
     return true;
 }
 
+bool UCP0CharacterMovement::TryStand()
+{
+    if (Posture == EPosture::Stand)
+        return true;
+
+    const auto Prev = Posture;
+    Posture = EPosture::Stand;
+
+    OnPostureChanged.Broadcast(Prev, Posture);
+    return true;
+}
+
+bool UCP0CharacterMovement::TryCrouch()
+{
+    if (Posture == EPosture::Crouch)
+        return true;
+
+    const auto Prev = Posture;
+    Posture = EPosture::Crouch;
+
+    OnPostureChanged.Broadcast(Prev, Posture);
+    return true;
+}
+
+bool UCP0CharacterMovement::TryProne()
+{
+    if (Posture == EPosture::Prone)
+        return true;
+
+    const auto Prev = Posture;
+    Posture = EPosture::Prone;
+
+    OnPostureChanged.Broadcast(Prev, Posture);
+    return true;
+}
+
 void UCP0CharacterMovement::TickComponent(float DeltaTime, ELevelTick TickType,
                                           FActorComponentTickFunction* ThisTickFunction)
 {
@@ -86,6 +122,11 @@ void UCP0CharacterMovement::ProcessSprint()
         StopSprint();
 }
 
+void UCP0CharacterMovement::OnRep_Posture(EPosture Prev)
+{
+    OnPostureChanged.Broadcast(Prev, Posture);
+}
+
 UCP0CharacterMovement* FMovementActionBase::GetObject(ACP0Character* Character)
 {
     return Character->GetCP0Movement();
@@ -108,24 +149,32 @@ void FSprintAction::Toggle(UCP0CharacterMovement* Movement)
 
 void FCrouchAction::Enable(UCP0CharacterMovement* Movement)
 {
+    Movement->TryCrouch();
 }
 
 void FCrouchAction::Disable(UCP0CharacterMovement* Movement)
 {
+    if (Movement->GetPosture() == EPosture::Crouch)
+        Movement->TryStand();
 }
 
 void FCrouchAction::Toggle(UCP0CharacterMovement* Movement)
 {
+    Movement->GetPosture() == EPosture::Crouch ? Movement->TryStand() : Movement->TryCrouch();
 }
 
 void FProneAction::Enable(UCP0CharacterMovement* Movement)
 {
+    Movement->TryProne();
 }
 
 void FProneAction::Disable(UCP0CharacterMovement* Movement)
 {
+    if (Movement->GetPosture() == EPosture::Prone)
+        Movement->TryStand();
 }
 
 void FProneAction::Toggle(UCP0CharacterMovement* Movement)
 {
+    Movement->GetPosture() == EPosture::Prone ? Movement->TryStand() : Movement->TryProne();
 }
