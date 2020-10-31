@@ -54,6 +54,12 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     FOnPostureChanged OnPostureChanged;
 
     UPROPERTY(EditAnywhere, meta = (UIMin = 0))
+    float CrouchSpeed = 200.0f;
+
+    UPROPERTY(EditAnywhere, meta = (UIMin = 0))
+    float ProneSpeed = 100.0f;
+
+    UPROPERTY(EditAnywhere, meta = (UIMin = 0))
     float SprintSpeed = 600.0f;
 
     UPROPERTY(EditAnywhere, meta = (UIMin = -1, UIMax = 1))

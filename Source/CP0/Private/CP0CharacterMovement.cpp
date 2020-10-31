@@ -16,7 +16,17 @@ float UCP0CharacterMovement::GetMaxSpeed() const
     {
     case MOVE_Walking:
     case MOVE_NavWalking:
-        return IsSprinting() ? GetSprintSpeed() : MaxWalkSpeed;
+        switch (Posture)
+        {
+        default:
+            ensureNoEntry();
+        case EPosture::Stand:
+            return IsSprinting() ? GetSprintSpeed() : MaxWalkSpeed;
+        case EPosture::Crouch:
+            return CrouchSpeed;
+        case EPosture::Prone:
+            return ProneSpeed;
+        }
     }
     return Super::GetMaxSpeed();
 }
