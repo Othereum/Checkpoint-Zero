@@ -18,6 +18,12 @@ class CP0_API UCP0AnimInstance : public UAnimInstance
     void NativeUpdateAnimation(float DeltaSeconds) override;
 
   private:
+    UPROPERTY(EditAnywhere, meta = (UIMin = 0))
+    float MinSprintSpeed = 400.0f;
+
+    UPROPERTY(EditAnywhere, meta = (UIMin = 0))
+    float MaxPostureAnimWalkSpeed = 100.0f;
+
     UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true, UIMin = 0))
     float MoveSpeed = 0.0f;
 
@@ -25,15 +31,15 @@ class CP0_API UCP0AnimInstance : public UAnimInstance
               meta = (AllowPrivateAccess = true, UIMin = -180, UIMax = 180))
     float MoveDirection = 0.0f;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true, UIMin = 0))
-    float MinSprintSpeed = 400.0f;
-
     UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     EPosture Posture = EPosture::Stand;
+
+    UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+    bool bIsSprinting = false;
 
     UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     bool bIsOnGround = true;
 
     UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-    bool bIsSprinting = false;
+    bool bShouldPlayPostureAnim = true;
 };

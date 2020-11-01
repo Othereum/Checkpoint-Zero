@@ -8,6 +8,11 @@
 UCP0CharacterMovement::UCP0CharacterMovement()
 {
     SetIsReplicatedByDefault(true);
+    MaxAcceleration = 1024.0f;
+    GroundFriction = 6.0f;
+    MaxWalkSpeed = 400.0f;
+    MaxWalkSpeedCrouched = 200.0f;
+    BrakingDecelerationWalking = 0.0f;
 }
 
 float UCP0CharacterMovement::GetMaxSpeed() const
@@ -21,29 +26,28 @@ float UCP0CharacterMovement::GetMaxSpeed() const
         default:
             ensureNoEntry();
         case EPosture::Stand:
-            return IsSprinting() ? GetSprintSpeed() : MaxWalkSpeed;
+            return IsSprinting() ? MaxSprintSpeed : MaxWalkSpeed;
         case EPosture::Crouch:
-            return CrouchSpeed;
+            return MaxWalkSpeedCrouched;
         case EPosture::Prone:
-            return ProneSpeed;
+            return MaxWalkSpeedProne;
         }
     }
     return Super::GetMaxSpeed();
 }
 
-float UCP0CharacterMovement::GetSprintSpeed() const
+float UCP0CharacterMovement::GetMaxAcceleration() const
 {
-    switch (SprintSpeedType)
+    switch (Posture)
     {
-    case ESprintSpeed::Absolute:
-        return SprintSpeed;
-    case ESprintSpeed::Relative:
-        return MaxWalkSpeed + SprintSpeed;
-    case ESprintSpeed::Multiply:
-        return MaxWalkSpeed * SprintSpeed;
     default:
         ensureNoEntry();
-        return SprintSpeed;
+    case EPosture::Stand:
+        return MaxAcceleration;
+    case EPosture::Crouch:
+        return MaxAccelerationCrouched;
+    case EPosture::Prone:
+        return MaxAccelerationProne;
     }
 }
 

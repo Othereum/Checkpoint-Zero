@@ -28,7 +28,7 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     UCP0CharacterMovement();
 
     float GetMaxSpeed() const override;
-    float GetSprintSpeed() const;
+    float GetMaxAcceleration() const override;
 
     bool IsSprinting() const { return bIsSprinting; }
     bool CanSprint() const;
@@ -54,13 +54,10 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     FOnPostureChanged OnPostureChanged;
 
     UPROPERTY(EditAnywhere, meta = (UIMin = 0))
-    float CrouchSpeed = 200.0f;
+    float MaxWalkSpeedProne = 100.0f;
 
     UPROPERTY(EditAnywhere, meta = (UIMin = 0))
-    float ProneSpeed = 100.0f;
-
-    UPROPERTY(EditAnywhere, meta = (UIMin = 0))
-    float SprintSpeed = 600.0f;
+    float MaxSprintSpeed = 600.0f;
 
     UPROPERTY(EditAnywhere, meta = (UIMin = -1, UIMax = 1))
     float MaxSprintAngleCos = 0.1f;
@@ -68,8 +65,11 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     UPROPERTY(EditAnywhere, meta = (UIMin = 0))
     float MinSprintSpeed = 10.0f;
 
-    UPROPERTY(EditAnywhere)
-    ESprintSpeed SprintSpeedType = ESprintSpeed::Absolute;
+    UPROPERTY(EditAnywhere, meta = (UIMin = 0))
+    float MaxAccelerationCrouched = 512.0f;
+
+    UPROPERTY(EditAnywhere, meta = (UIMin = 0))
+    float MaxAccelerationProne = 256.0f;
 
     UPROPERTY(ReplicatedUsing = OnRep_Posture, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     EPosture Posture = EPosture::Stand;
