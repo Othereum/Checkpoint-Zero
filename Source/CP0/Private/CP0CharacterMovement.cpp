@@ -117,6 +117,7 @@ float UCP0CharacterMovement::GetPostureSwitchTime(EPosture Prev, EPosture New) c
         case EPosture::Prone:
             return StandToProneTime;
         }
+        break;
     case EPosture::Crouch:
         switch (New)
         {
@@ -125,6 +126,7 @@ float UCP0CharacterMovement::GetPostureSwitchTime(EPosture Prev, EPosture New) c
         case EPosture::Prone:
             return CrouchToProneTime;
         }
+        break;
     case EPosture::Prone:
         switch (New)
         {
@@ -133,6 +135,7 @@ float UCP0CharacterMovement::GetPostureSwitchTime(EPosture Prev, EPosture New) c
         case EPosture::Crouch:
             return ProneToCrouchTime;
         }
+        break;
     }
     ensureNoEntry();
     return 0.0f;

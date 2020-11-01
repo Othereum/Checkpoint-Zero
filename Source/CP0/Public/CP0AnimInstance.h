@@ -32,6 +32,12 @@ class CP0_API UCP0AnimInstance : public UAnimInstance
     float MoveDirection = 0.0f;
 
     UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+    float AimPitch = 0.0f;
+
+    UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+    float AimYaw = 0.0f;
+
+    UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     EPosture Posture = EPosture::Stand;
 
     UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
