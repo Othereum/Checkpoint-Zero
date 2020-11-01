@@ -25,4 +25,6 @@ void UCP0AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
     bIsOnGround = Movement->IsMovingOnGround();
     bIsSprinting = Movement->IsSprinting() && MoveSpeed > MinSprintSpeed;
     bShouldPlayPostureAnim = MoveSpeed < MaxPostureAnimWalkSpeed || Movement->IsProneSwitching();
+
+    bHideUpperBody = Character->IsUpperBodyHidden();
 }

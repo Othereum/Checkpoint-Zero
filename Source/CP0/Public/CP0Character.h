@@ -22,7 +22,9 @@ class CP0_API ACP0Character final : public ACharacter
 
   public:
     ACP0Character(const FObjectInitializer& Initializer);
-    [[nodiscard]] UCP0CharacterMovement* GetCP0Movement() const;
+
+    UCP0CharacterMovement* GetCP0Movement() const;
+    bool IsUpperBodyHidden() const { return bIsUpperBodyHidden; }
 
   protected:
     void BeginPlay() override;
@@ -30,8 +32,13 @@ class CP0_API ACP0Character final : public ACharacter
     void SetupPlayerInputComponent(UInputComponent* InputComp) override;
     void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+    void PossessedBy(AController* NewController) override;
+    void UnPossessed() override;
+
   private:
     friend struct FSprintAction;
+
+    void UpdateLegs();
 
     void RegisterInputActions();
     void DispatchInputAction(FName Name, EInputAction Type);
@@ -49,4 +56,12 @@ class CP0_API ACP0Character final : public ACharacter
     void LookUp(float AxisValue);
 
     TMap<FName, void (*)(ACP0Character*, EInputAction)> InputActionMap;
+
+    UPROPERTY(EditAnywhere)
+    FVector LegsOffset{-30.0f, 0.0f, 10.0f};
+    TOptional<FVector> InitialMeshLocation;
+
+    UPROPERTY(EditAnywhere)
+    bool bHideUpperBodyForOwner = true;
+    bool bIsUpperBodyHidden = false;
 };
