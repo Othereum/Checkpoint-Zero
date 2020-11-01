@@ -21,6 +21,9 @@ float UCP0CharacterMovement::GetMaxSpeed() const
     {
     case MOVE_Walking:
     case MOVE_NavWalking:
+        if (IsProneSwitching())
+            return 0.0f;
+
         switch (Posture)
         {
         default:
@@ -76,40 +79,63 @@ bool UCP0CharacterMovement::TryStartSprint()
     return true;
 }
 
-bool UCP0CharacterMovement::TryStand()
+bool UCP0CharacterMovement::TrySetPosture(EPosture New)
 {
-    if (Posture == EPosture::Stand)
+    if (Posture == New)
         return true;
 
-    const auto Prev = Posture;
-    Posture = EPosture::Stand;
+    if (IsPostureSwitching())
+        return false;
 
-    OnPostureChanged.Broadcast(Prev, Posture);
+    PrevPosture = Posture;
+    Posture = New;
+    OnPostureChanged.Broadcast(PrevPosture, New);
+
+    NextPostureSwitch = CurTime() + GetPostureSwitchTime(PrevPosture, New);
     return true;
 }
 
-bool UCP0CharacterMovement::TryCrouch()
+bool UCP0CharacterMovement::IsPostureSwitching() const
 {
-    if (Posture == EPosture::Crouch)
-        return true;
-
-    const auto Prev = Posture;
-    Posture = EPosture::Crouch;
-
-    OnPostureChanged.Broadcast(Prev, Posture);
-    return true;
+    return NextPostureSwitch > CurTime();
 }
 
-bool UCP0CharacterMovement::TryProne()
+bool UCP0CharacterMovement::IsProneSwitching() const
 {
-    if (Posture == EPosture::Prone)
-        return true;
+    return IsPostureSwitching() && (PrevPosture == EPosture::Prone || Posture == EPosture::Prone);
+}
 
-    const auto Prev = Posture;
-    Posture = EPosture::Prone;
-
-    OnPostureChanged.Broadcast(Prev, Posture);
-    return true;
+float UCP0CharacterMovement::GetPostureSwitchTime(EPosture Prev, EPosture New) const
+{
+    switch (Prev)
+    {
+    case EPosture::Stand:
+        switch (New)
+        {
+        case EPosture::Crouch:
+            return StandToCrouchTime;
+        case EPosture::Prone:
+            return StandToProneTime;
+        }
+    case EPosture::Crouch:
+        switch (New)
+        {
+        case EPosture::Stand:
+            return CrouchToStandTime;
+        case EPosture::Prone:
+            return CrouchToProneTime;
+        }
+    case EPosture::Prone:
+        switch (New)
+        {
+        case EPosture::Stand:
+            return ProneToStandTime;
+        case EPosture::Crouch:
+            return ProneToCrouchTime;
+        }
+    }
+    ensureNoEntry();
+    return 0.0f;
 }
 
 void UCP0CharacterMovement::TickComponent(float DeltaTime, ELevelTick TickType,
@@ -136,8 +162,14 @@ void UCP0CharacterMovement::ProcessSprint()
         StopSprint();
 }
 
+float UCP0CharacterMovement::CurTime() const
+{
+    return GetWorld()->GetTimeSeconds();
+}
+
 void UCP0CharacterMovement::OnRep_Posture(EPosture Prev)
 {
+    PrevPosture = Prev;
     OnPostureChanged.Broadcast(Prev, Posture);
 }
 
@@ -163,32 +195,32 @@ void FSprintAction::Toggle(UCP0CharacterMovement* Movement)
 
 void FCrouchAction::Enable(UCP0CharacterMovement* Movement)
 {
-    Movement->TryCrouch();
+    Movement->TrySetPosture(EPosture::Crouch);
 }
 
 void FCrouchAction::Disable(UCP0CharacterMovement* Movement)
 {
     if (Movement->GetPosture() == EPosture::Crouch)
-        Movement->TryStand();
+        Movement->TrySetPosture(EPosture::Stand);
 }
 
 void FCrouchAction::Toggle(UCP0CharacterMovement* Movement)
 {
-    Movement->GetPosture() == EPosture::Crouch ? Movement->TryStand() : Movement->TryCrouch();
+    Movement->TrySetPosture(Movement->GetPosture() == EPosture::Crouch ? EPosture::Stand : EPosture::Crouch);
 }
 
 void FProneAction::Enable(UCP0CharacterMovement* Movement)
 {
-    Movement->TryProne();
+    Movement->TrySetPosture(EPosture::Prone);
 }
 
 void FProneAction::Disable(UCP0CharacterMovement* Movement)
 {
     if (Movement->GetPosture() == EPosture::Prone)
-        Movement->TryStand();
+        Movement->TrySetPosture(EPosture::Stand);
 }
 
 void FProneAction::Toggle(UCP0CharacterMovement* Movement)
 {
-    Movement->GetPosture() == EPosture::Prone ? Movement->TryStand() : Movement->TryProne();
+    Movement->TrySetPosture(Movement->GetPosture() == EPosture::Prone ? EPosture::Stand : EPosture::Prone);
 }

@@ -36,9 +36,10 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     void StopSprint() { bIsSprinting = false; }
 
     EPosture GetPosture() const { return Posture; }
-    bool TryStand();
-    bool TryCrouch();
-    bool TryProne();
+    bool TrySetPosture(EPosture New);
+    bool IsPostureSwitching() const;
+    bool IsProneSwitching() const;
+    float GetPostureSwitchTime(EPosture Prev, EPosture New) const;
 
   protected:
     void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -46,6 +47,7 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
 
   private:
     void ProcessSprint();
+    float CurTime() const;
 
     UFUNCTION()
     void OnRep_Posture(EPosture Prev);
@@ -71,8 +73,29 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     UPROPERTY(EditAnywhere, meta = (UIMin = 0))
     float MaxAccelerationProne = 256.0f;
 
+    UPROPERTY(EditAnywhere, meta = (UIMin = 0))
+    float StandToCrouchTime = 1.0f;
+
+    UPROPERTY(EditAnywhere, meta = (UIMin = 0))
+    float StandToProneTime = 1.0f;
+
+    UPROPERTY(EditAnywhere, meta = (UIMin = 0))
+    float CrouchToStandTime = 1.0f;
+
+    UPROPERTY(EditAnywhere, meta = (UIMin = 0))
+    float CrouchToProneTime = 1.0f;
+
+    UPROPERTY(EditAnywhere, meta = (UIMin = 0))
+    float ProneToStandTime = 1.0f;
+
+    UPROPERTY(EditAnywhere, meta = (UIMin = 0))
+    float ProneToCrouchTime = 1.0f;
+
+    float NextPostureSwitch = 0.0f;
+
     UPROPERTY(ReplicatedUsing = OnRep_Posture, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     EPosture Posture = EPosture::Stand;
+    EPosture PrevPosture = EPosture::Stand;
 
     UPROPERTY(Replicated, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     bool bIsSprinting = false;

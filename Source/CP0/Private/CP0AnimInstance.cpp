@@ -15,10 +15,10 @@ void UCP0AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
     const auto Velocity = Character->GetVelocity();
     MoveSpeed = Velocity.Size2D();
     MoveDirection = MoveSpeed > 1.0f ? CalculateDirection(Velocity, Character->GetActorRotation()) : 0.0f;
-    bShouldPlayPostureAnim = MoveSpeed < MaxPostureAnimWalkSpeed;
-
+    
     const auto Movement = Character->GetCP0Movement();
     Posture = Movement->GetPosture();
     bIsOnGround = Movement->IsMovingOnGround();
     bIsSprinting = Movement->IsSprinting() && MoveSpeed > MinSprintSpeed;
+    bShouldPlayPostureAnim = MoveSpeed < MaxPostureAnimWalkSpeed || Movement->IsProneSwitching();
 }
