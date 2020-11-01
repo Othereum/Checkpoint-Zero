@@ -48,7 +48,4 @@ class CP0_API UCP0AnimInstance : public UAnimInstance
 
     UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     bool bShouldPlayPostureAnim = true;
-
-    UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-    bool bHideUpperBody = false;
 };

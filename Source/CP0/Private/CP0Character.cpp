@@ -20,7 +20,6 @@ UCP0CharacterMovement* ACP0Character::GetCP0Movement() const
 void ACP0Character::BeginPlay()
 {
     Super::BeginPlay();
-    UpdateLegs();
 }
 
 void ACP0Character::Tick(float DeltaTime)
@@ -38,9 +37,7 @@ void ACP0Character::SetupPlayerInputComponent(UInputComponent* Input)
     Input->BindAxis(TEXT("LookUp"), this, &ACP0Character::LookUp);
 
     for (const auto& Action : InputActionMap)
-    {
         BindInputAction(Input, Action.Key);
-    }
 }
 
 void ACP0Character::RegisterInputActions()
@@ -53,29 +50,6 @@ void ACP0Character::RegisterInputActions()
 void ACP0Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-}
-
-void ACP0Character::PossessedBy(AController* NewController)
-{
-    Super::PossessedBy(NewController);
-    UpdateLegs();
-}
-
-void ACP0Character::UnPossessed()
-{
-    Super::UnPossessed();
-    UpdateLegs();
-}
-
-void ACP0Character::UpdateLegs()
-{
-    if (!InitialMeshLocation)
-        InitialMeshLocation = GetMesh()->GetRelativeLocation();
-
-    bIsUpperBodyHidden = bHideUpperBodyForOwner && IsLocallyControlled();
-    GetMesh()->SetRelativeLocation(bIsUpperBodyHidden ? *InitialMeshLocation + LegsOffset : *InitialMeshLocation);
-    GetMesh()->bSelfShadowOnly = bIsUpperBodyHidden;
-    GetMesh()->MarkRenderStateDirty();
 }
 
 void ACP0Character::MoveForward(float AxisValue)
