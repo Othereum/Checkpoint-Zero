@@ -6,6 +6,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "CP0CharacterMovement.generated.h"
 
+class ACP0Character;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPostureChanged, EPosture, Prev, EPosture, New);
 
 UENUM(BlueprintType)
@@ -26,6 +28,7 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
 
   public:
     UCP0CharacterMovement();
+    ACP0Character* GetCP0Owner() const;
 
     float GetMaxSpeed() const override;
     float GetMaxAcceleration() const override;

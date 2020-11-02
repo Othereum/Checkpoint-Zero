@@ -17,6 +17,11 @@ UCP0CharacterMovement::UCP0CharacterMovement()
     BrakingDecelerationWalking = 0.0f;
 }
 
+ACP0Character* UCP0CharacterMovement::GetCP0Owner() const
+{
+    return CastChecked<ACP0Character>(GetCharacterOwner(), ECastCheckedType::NullAllowed);
+}
+
 float UCP0CharacterMovement::GetMaxSpeed() const
 {
     switch (MovementMode)
