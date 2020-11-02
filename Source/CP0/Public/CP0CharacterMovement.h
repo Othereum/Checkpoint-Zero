@@ -57,7 +57,7 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     FOnPostureChanged OnPostureChanged;
 
     UPROPERTY(EditAnywhere, meta = (UIMin = 0))
-    float MaxWalkSpeedProne = 100.0f;
+    float MaxWalkSpeedProne = 50.0f;
 
     UPROPERTY(EditAnywhere, meta = (UIMin = 0))
     float MaxSprintSpeed = 600.0f;
@@ -81,19 +81,19 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     float StandToCrouchTime = 0.5f;
 
     UPROPERTY(EditAnywhere, meta = (UIMin = 0))
-    float StandToProneTime = 1.0f;
+    float StandToProneTime = 1.5f;
 
     UPROPERTY(EditAnywhere, meta = (UIMin = 0))
-    float CrouchToStandTime = 1.0f;
+    float CrouchToStandTime = 0.5f;
 
     UPROPERTY(EditAnywhere, meta = (UIMin = 0))
     float CrouchToProneTime = 1.0f;
 
     UPROPERTY(EditAnywhere, meta = (UIMin = 0))
-    float ProneToStandTime = 1.0f;
+    float ProneToStandTime = 1.8f;
 
     UPROPERTY(EditAnywhere, meta = (UIMin = 0))
-    float ProneToCrouchTime = 1.0f;
+    float ProneToCrouchTime = 1.2f;
 
     float NextPostureSwitch = 0.0f;
 

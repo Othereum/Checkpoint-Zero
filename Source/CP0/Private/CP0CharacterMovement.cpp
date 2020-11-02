@@ -10,6 +10,7 @@ UCP0CharacterMovement::UCP0CharacterMovement()
 {
     SetIsReplicatedByDefault(true);
     MaxAcceleration = 1024.0f;
+    CrouchedHalfHeight = 60.0f;
     GroundFriction = 6.0f;
     MaxWalkSpeed = 400.0f;
     MaxWalkSpeedCrouched = 200.0f;
