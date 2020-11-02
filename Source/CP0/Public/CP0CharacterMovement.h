@@ -40,6 +40,7 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     bool IsPostureSwitching() const;
     bool IsProneSwitching() const;
     float GetPostureSwitchTime(EPosture Prev, EPosture New) const;
+    float GetHalfHeight(EPosture P) const;
 
   protected:
     void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -74,7 +75,10 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     float MaxAccelerationProne = 256.0f;
 
     UPROPERTY(EditAnywhere, meta = (UIMin = 0))
-    float StandToCrouchTime = 1.0f;
+    float ProneHalfHeight = 34.0f;
+
+    UPROPERTY(EditAnywhere, meta = (UIMin = 0))
+    float StandToCrouchTime = 0.5f;
 
     UPROPERTY(EditAnywhere, meta = (UIMin = 0))
     float StandToProneTime = 1.0f;

@@ -3,6 +3,7 @@
 #include "CP0CharacterMovement.h"
 #include "CP0.h"
 #include "CP0Character.h"
+#include "Components/CapsuleComponent.h"
 #include "Net/UnrealNetwork.h"
 
 UCP0CharacterMovement::UCP0CharacterMovement()
@@ -87,6 +88,8 @@ bool UCP0CharacterMovement::TrySetPosture(EPosture New)
     if (IsPostureSwitching())
         return false;
 
+    GetCharacterOwner()->GetCapsuleComponent()->SetCapsuleHalfHeight(GetHalfHeight(New));
+
     PrevPosture = Posture;
     Posture = New;
     OnPostureChanged.Broadcast(PrevPosture, New);
@@ -139,6 +142,21 @@ float UCP0CharacterMovement::GetPostureSwitchTime(EPosture Prev, EPosture New) c
     }
     ensureNoEntry();
     return 0.0f;
+}
+
+float UCP0CharacterMovement::GetHalfHeight(EPosture P) const
+{
+    switch (P)
+    {
+    default:
+        ensureNoEntry();
+    case EPosture::Stand:
+        return GetCharacterOwner()->GetDefaultHalfHeight();
+    case EPosture::Crouch:
+        return CrouchedHalfHeight;
+    case EPosture::Prone:
+        return ProneHalfHeight;
+    }
 }
 
 void UCP0CharacterMovement::TickComponent(float DeltaTime, ELevelTick TickType,
