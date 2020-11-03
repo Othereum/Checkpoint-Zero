@@ -94,15 +94,17 @@ bool UCP0CharacterMovement::TrySetPosture(EPosture New)
     if (IsPostureSwitching())
         return false;
 
-    const auto Owner = GetCP0Owner();
-    const auto Height = GetHalfHeight(New);
-    Owner->GetCapsuleComponent()->SetCapsuleHalfHeight(Height);
-    Owner->GetMesh()->SetRelativeLocation({0.0f, 0.0f, -Height});
-
     PrevPosture = Posture;
     Posture = New;
     OnPostureChanged.Broadcast(PrevPosture, New);
 
+    const auto Owner = GetCP0Owner();
+    const auto Height = GetHalfHeight(New);
+    const auto Capsule = Owner->GetCapsuleComponent();
+    Owner->AddActorLocalOffset(
+        {0.0f, 0.0f, Capsule->GetComponentScale().Z * (Height - Capsule->GetUnscaledCapsuleHalfHeight())});
+    Capsule->SetCapsuleHalfHeight(Height);
+    Owner->GetMesh()->SetRelativeLocation({0.0f, 0.0f, -Height});
     Owner->RecalculateBaseEyeHeight();
 
     NextPostureSwitch = CurTime() + GetPostureSwitchTime(PrevPosture, New);
