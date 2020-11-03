@@ -94,7 +94,10 @@ bool UCP0CharacterMovement::TrySetPosture(EPosture New)
     if (IsPostureSwitching())
         return false;
 
-    GetCharacterOwner()->GetCapsuleComponent()->SetCapsuleHalfHeight(GetHalfHeight(New));
+    const auto Owner = GetCharacterOwner();
+    const auto Height = GetHalfHeight(New);
+    Owner->GetCapsuleComponent()->SetCapsuleHalfHeight(Height);
+    Owner->GetMesh()->SetRelativeLocation({0.0f, 0.0f, -Height});
 
     PrevPosture = Posture;
     Posture = New;
