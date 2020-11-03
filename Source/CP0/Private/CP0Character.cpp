@@ -17,6 +17,29 @@ UCP0CharacterMovement* ACP0Character::GetCP0Movement() const
     return CastChecked<UCP0CharacterMovement>(GetCharacterMovement());
 }
 
+void ACP0Character::SetEyeHeightWithBlend(float NewEyeHeight, float BlendTime)
+{
+    TargetEyeHeight = NewEyeHeight;
+    PrevEyeHeight = BaseEyeHeight;
+    EyeHeightAlpha = 0.0f;
+    EyeHeightBlendTime = BlendTime;
+}
+
+float ACP0Character::GetEyeHeight(EPosture Posture) const
+{
+    switch (Posture)
+    {
+    default:
+        ensureNoEntry();
+    case EPosture::Stand:
+        return GetDefault<APawn>(GetClass())->BaseEyeHeight;
+    case EPosture::Crouch:
+        return CrouchedEyeHeight;
+    case EPosture::Prone:
+        return ProneEyeHeight;
+    }
+}
+
 void ACP0Character::BeginPlay()
 {
     Super::BeginPlay();
@@ -25,6 +48,7 @@ void ACP0Character::BeginPlay()
 void ACP0Character::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
+    InterpEyeHeight(DeltaTime);
 }
 
 void ACP0Character::SetupPlayerInputComponent(UInputComponent* Input)
@@ -40,6 +64,15 @@ void ACP0Character::SetupPlayerInputComponent(UInputComponent* Input)
         BindInputAction(Input, Action.Key);
 }
 
+void ACP0Character::InterpEyeHeight(float DeltaTime)
+{
+    if (EyeHeightAlpha >= 1.0f)
+        return;
+
+    EyeHeightAlpha = FMath::Min(EyeHeightAlpha + DeltaTime * EyeHeightBlendTime, 1.0f);
+    BaseEyeHeight = FMath::CubicInterp(PrevEyeHeight, 0.0f, TargetEyeHeight, 0.0f, EyeHeightAlpha);
+}
+
 void ACP0Character::RegisterInputActions()
 {
     RegisterInputAction<FSprintAction>(TEXT("Sprint"));
@@ -50,21 +83,6 @@ void ACP0Character::RegisterInputActions()
 void ACP0Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-}
-
-void ACP0Character::RecalculateBaseEyeHeight()
-{
-    switch (GetCP0Movement()->GetPosture())
-    {
-    case EPosture::Crouch:
-        BaseEyeHeight = CrouchedEyeHeight;
-        break;
-    case EPosture::Prone:
-        BaseEyeHeight = ProneEyeHeight;
-        break;
-    default:
-        APawn::RecalculateBaseEyeHeight();
-    }
 }
 
 void ACP0Character::MoveForward(float AxisValue)

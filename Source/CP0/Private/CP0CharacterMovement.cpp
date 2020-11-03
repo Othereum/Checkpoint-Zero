@@ -101,13 +101,14 @@ bool UCP0CharacterMovement::TrySetPosture(EPosture New)
     const auto Owner = GetCP0Owner();
     const auto Height = GetHalfHeight(New);
     const auto Capsule = Owner->GetCapsuleComponent();
+    const auto SwitchTime = GetPostureSwitchTime(PrevPosture, New);
     Owner->AddActorLocalOffset(
         {0.0f, 0.0f, Capsule->GetComponentScale().Z * (Height - Capsule->GetUnscaledCapsuleHalfHeight())});
     Capsule->SetCapsuleHalfHeight(Height);
     Owner->GetMesh()->SetRelativeLocation({0.0f, 0.0f, -Height});
-    Owner->RecalculateBaseEyeHeight();
+    Owner->SetEyeHeightWithBlend(Owner->GetEyeHeight(New), SwitchTime);
 
-    NextPostureSwitch = CurTime() + GetPostureSwitchTime(PrevPosture, New);
+    NextPostureSwitch = CurTime() + SwitchTime;
     return true;
 }
 

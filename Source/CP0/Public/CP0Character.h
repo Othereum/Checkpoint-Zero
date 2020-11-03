@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "CP0.h"
 #include "GameFramework/Character.h"
 #include "CP0Character.generated.h"
 
@@ -23,7 +24,10 @@ class CP0_API ACP0Character final : public ACharacter
   public:
     ACP0Character(const FObjectInitializer& Initializer);
     UCP0CharacterMovement* GetCP0Movement() const;
-    void RecalculateBaseEyeHeight() override;
+
+    void SetEyeHeightWithBlend(float NewEyeHeight, float BlendTime);
+    float GetEyeHeight(EPosture Posture) const;
+    void RecalculateBaseEyeHeight() override {}
 
   protected:
     void BeginPlay() override;
@@ -33,6 +37,8 @@ class CP0_API ACP0Character final : public ACharacter
 
   private:
     friend struct FSprintAction;
+
+    void InterpEyeHeight(float DeltaTime);
 
     void RegisterInputActions();
     void DispatchInputAction(FName Name, EInputAction Type);
@@ -53,4 +59,9 @@ class CP0_API ACP0Character final : public ACharacter
 
     UPROPERTY(EditAnywhere, Category = "Camera")
     float ProneEyeHeight = 0.0f;
+
+    float TargetEyeHeight = BaseEyeHeight;
+    float PrevEyeHeight = BaseEyeHeight;
+    float EyeHeightAlpha = 1.0f;
+    float EyeHeightBlendTime = 1.0f;
 };
