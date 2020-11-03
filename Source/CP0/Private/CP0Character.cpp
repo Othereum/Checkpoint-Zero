@@ -52,6 +52,21 @@ void ACP0Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 }
 
+void ACP0Character::RecalculateBaseEyeHeight()
+{
+    switch (GetCP0Movement()->GetPosture())
+    {
+    case EPosture::Crouch:
+        BaseEyeHeight = CrouchedEyeHeight;
+        break;
+    case EPosture::Prone:
+        BaseEyeHeight = ProneEyeHeight;
+        break;
+    default:
+        APawn::RecalculateBaseEyeHeight();
+    }
+}
+
 void ACP0Character::MoveForward(float AxisValue)
 {
     AddMovementInput(GetActorForwardVector(), AxisValue);

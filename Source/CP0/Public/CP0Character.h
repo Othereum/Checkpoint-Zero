@@ -23,6 +23,7 @@ class CP0_API ACP0Character final : public ACharacter
   public:
     ACP0Character(const FObjectInitializer& Initializer);
     UCP0CharacterMovement* GetCP0Movement() const;
+    void RecalculateBaseEyeHeight() override;
 
   protected:
     void BeginPlay() override;
@@ -49,4 +50,7 @@ class CP0_API ACP0Character final : public ACharacter
     void LookUp(float AxisValue);
 
     TMap<FName, void (*)(ACP0Character*, EInputAction)> InputActionMap;
+
+    UPROPERTY(EditAnywhere, Category = "Camera")
+    float ProneEyeHeight = 0.0f;
 };
