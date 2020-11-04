@@ -57,9 +57,7 @@ void ACP0Character::DispatchInputAction(FName Name, EInputAction Type)
 {
     const auto Dispatcher = InputActionMap.Find(Name);
     if (ensure(Dispatcher))
-    {
         (*Dispatcher)(this, Type);
-    }
 
     if (!HasAuthority())
         ServerInputAction(Name, Type);

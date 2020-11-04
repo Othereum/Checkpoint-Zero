@@ -104,9 +104,9 @@ bool UCP0CharacterMovement::TrySetPosture(EPosture New)
     const auto SwitchTime = GetPostureSwitchTime(PrevPosture, New);
     Owner->AddActorLocalOffset(
         {0.0f, 0.0f, Capsule->GetComponentScale().Z * (Height - Capsule->GetUnscaledCapsuleHalfHeight())});
+    Owner->SetEyeHeightWithBlend(Owner->GetDefaultEyeHeight(New), SwitchTime);
     Capsule->SetCapsuleHalfHeight(Height);
     Owner->GetMesh()->SetRelativeLocation({0.0f, 0.0f, -Height});
-    Owner->SetEyeHeightWithBlend(Owner->GetEyeHeight(New), SwitchTime);
 
     NextPostureSwitch = CurTime() + SwitchTime;
     return true;

@@ -25,9 +25,13 @@ class CP0_API ACP0Character final : public ACharacter
     ACP0Character(const FObjectInitializer& Initializer);
     UCP0CharacterMovement* GetCP0Movement() const;
 
-    void SetEyeHeightWithBlend(float NewEyeHeight, float BlendTime);
-    float GetEyeHeight(EPosture Posture) const;
     void RecalculateBaseEyeHeight() override {}
+    void SetEyeHeight(float NewEyeHeight);
+    void SetEyeHeightWithBlend(float NewEyeHeight, float BlendTime);
+    float GetDefaultEyeHeight(EPosture Posture) const;
+    float GetEyeHeight() const;
+
+    float PlayAnimMontage(UAnimMontage* AnimMontage, float InPlayRate = 1.0f, FName StartSectionName = NAME_None);
 
   protected:
     void BeginPlay() override;
@@ -57,11 +61,14 @@ class CP0_API ACP0Character final : public ACharacter
 
     TMap<FName, void (*)(ACP0Character*, EInputAction)> InputActionMap;
 
-    UPROPERTY(EditAnywhere, Category = "Camera")
-    float ProneEyeHeight = 0.0f;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+    USkeletalMeshComponent* Legs;
 
-    float TargetEyeHeight = BaseEyeHeight;
-    float PrevEyeHeight = BaseEyeHeight;
-    float EyeHeightAlpha = 1.0f;
-    float EyeHeightBlendTime = 1.0f;
+    UPROPERTY(EditAnywhere, Category = "Camera")
+    float ProneEyeHeight = 35.f;
+
+    float TargetEyeHeight = 150.f;
+    float PrevEyeHeight = 150.f;
+    float EyeHeightAlpha = 1.f;
+    float EyeHeightBlendTime = 1.f;
 };

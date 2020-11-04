@@ -3,12 +3,27 @@
 #include "CP0Character.h"
 #include "CP0CharacterInput.inl"
 #include "CP0CharacterMovement.h"
+#include "Components/CapsuleComponent.h"
 #include "Net/UnrealNetwork.h"
 
 ACP0Character::ACP0Character(const FObjectInitializer& Initializer)
-    : Super{Initializer.SetDefaultSubobjectClass<UCP0CharacterMovement>(ACharacter::CharacterMovementComponentName)}
+    : Super{Initializer.SetDefaultSubobjectClass<UCP0CharacterMovement>(ACharacter::CharacterMovementComponentName)},
+      Legs{CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Legs"))}
 {
     PrimaryActorTick.bCanEverTick = true;
+    BaseEyeHeight = 150.f;
+    CrouchedEyeHeight = 100.f;
+
+    GetMesh()->SetRelativeLocationAndRotation({0.f, 0.f, -88.f}, {0.f, -90.f, 0.f});
+    GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
+    GetMesh()->bOwnerNoSee = true;
+
+    Legs->SetupAttachment(GetMesh());
+    Legs->SetRelativeLocation({0.f, -30.f, 10.f});
+    Legs->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
+    Legs->bOnlyOwnerSee = true;
+    Legs->bSelfShadowOnly = true;
+
     RegisterInputActions();
 }
 
@@ -17,15 +32,29 @@ UCP0CharacterMovement* ACP0Character::GetCP0Movement() const
     return CastChecked<UCP0CharacterMovement>(GetCharacterMovement());
 }
 
+void ACP0Character::SetEyeHeight(float NewEyeHeight)
+{
+    BaseEyeHeight = NewEyeHeight - GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
+}
+
 void ACP0Character::SetEyeHeightWithBlend(float NewEyeHeight, float BlendTime)
 {
     TargetEyeHeight = NewEyeHeight;
-    PrevEyeHeight = BaseEyeHeight;
-    EyeHeightAlpha = 0.0f;
     EyeHeightBlendTime = BlendTime;
+    PrevEyeHeight = GetEyeHeight();
+
+    if (BlendTime > KINDA_SMALL_NUMBER)
+    {
+        EyeHeightAlpha = 0.f;
+    }
+    else
+    {
+        EyeHeightAlpha = 1.f;
+        SetEyeHeight(NewEyeHeight);
+    }
 }
 
-float ACP0Character::GetEyeHeight(EPosture Posture) const
+float ACP0Character::GetDefaultEyeHeight(EPosture Posture) const
 {
     switch (Posture)
     {
@@ -40,9 +69,30 @@ float ACP0Character::GetEyeHeight(EPosture Posture) const
     }
 }
 
+float ACP0Character::GetEyeHeight() const
+{
+    return BaseEyeHeight + GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
+}
+
+float ACP0Character::PlayAnimMontage(UAnimMontage* AnimMontage, float InPlayRate, FName StartSectionName)
+{
+    if (const auto AnimInst = Legs->GetAnimInstance())
+    {
+        const auto Duration = AnimInst->Montage_Play(AnimMontage, InPlayRate);
+        if (Duration > 0.f)
+        {
+            if (StartSectionName != NAME_None)
+                AnimInst->Montage_JumpToSection(StartSectionName, AnimMontage);
+        }
+    }
+
+    return Super::PlayAnimMontage(AnimMontage, InPlayRate, StartSectionName);
+}
+
 void ACP0Character::BeginPlay()
 {
     Super::BeginPlay();
+    SetEyeHeight(BaseEyeHeight);
 }
 
 void ACP0Character::Tick(float DeltaTime)
@@ -66,11 +116,11 @@ void ACP0Character::SetupPlayerInputComponent(UInputComponent* Input)
 
 void ACP0Character::InterpEyeHeight(float DeltaTime)
 {
-    if (EyeHeightAlpha >= 1.0f)
+    if (EyeHeightAlpha >= 1.f)
         return;
 
-    EyeHeightAlpha = FMath::Min(EyeHeightAlpha + DeltaTime * EyeHeightBlendTime, 1.0f);
-    BaseEyeHeight = FMath::CubicInterp(PrevEyeHeight, 0.0f, TargetEyeHeight, 0.0f, EyeHeightAlpha);
+    EyeHeightAlpha = FMath::Clamp(EyeHeightAlpha + DeltaTime / EyeHeightBlendTime, 0.f, 1.f);
+    SetEyeHeight(FMath::CubicInterp(PrevEyeHeight, 0.f, TargetEyeHeight, 0.f, EyeHeightAlpha));
 }
 
 void ACP0Character::RegisterInputActions()
