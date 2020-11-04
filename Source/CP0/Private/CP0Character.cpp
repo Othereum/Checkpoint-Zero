@@ -11,15 +11,13 @@ ACP0Character::ACP0Character(const FObjectInitializer& Initializer)
       Legs{CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Legs"))}
 {
     PrimaryActorTick.bCanEverTick = true;
-    BaseEyeHeight = 150.f;
-    CrouchedEyeHeight = 100.f;
+    BaseEyeHeight = 150.0f;
+    CrouchedEyeHeight = 100.0f;
 
-    GetMesh()->SetRelativeLocationAndRotation({0.f, 0.f, -88.f}, {0.f, -90.f, 0.f});
     GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
     GetMesh()->bOwnerNoSee = true;
 
     Legs->SetupAttachment(GetMesh());
-    Legs->SetRelativeLocation({0.f, -30.f, 10.f});
     Legs->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
     Legs->bOnlyOwnerSee = true;
     Legs->bSelfShadowOnly = true;
@@ -45,11 +43,11 @@ void ACP0Character::SetEyeHeightWithBlend(float NewEyeHeight, float BlendTime)
 
     if (BlendTime > KINDA_SMALL_NUMBER)
     {
-        EyeHeightAlpha = 0.f;
+        EyeHeightAlpha = 0.0f;
     }
     else
     {
-        EyeHeightAlpha = 1.f;
+        EyeHeightAlpha = 1.0f;
         SetEyeHeight(NewEyeHeight);
     }
 }
@@ -79,7 +77,7 @@ float ACP0Character::PlayAnimMontage(UAnimMontage* AnimMontage, float InPlayRate
     if (const auto AnimInst = Legs->GetAnimInstance())
     {
         const auto Duration = AnimInst->Montage_Play(AnimMontage, InPlayRate);
-        if (Duration > 0.f)
+        if (Duration > 0.0f)
         {
             if (StartSectionName != NAME_None)
                 AnimInst->Montage_JumpToSection(StartSectionName, AnimMontage);
@@ -116,11 +114,11 @@ void ACP0Character::SetupPlayerInputComponent(UInputComponent* Input)
 
 void ACP0Character::InterpEyeHeight(float DeltaTime)
 {
-    if (EyeHeightAlpha >= 1.f)
+    if (EyeHeightAlpha >= 1.0f)
         return;
 
-    EyeHeightAlpha = FMath::Clamp(EyeHeightAlpha + DeltaTime / EyeHeightBlendTime, 0.f, 1.f);
-    SetEyeHeight(FMath::CubicInterp(PrevEyeHeight, 0.f, TargetEyeHeight, 0.f, EyeHeightAlpha));
+    EyeHeightAlpha = FMath::Clamp(EyeHeightAlpha + DeltaTime / EyeHeightBlendTime, 0.0f, 1.0f);
+    SetEyeHeight(FMath::CubicInterp(PrevEyeHeight, 0.0f, TargetEyeHeight, 0.0f, EyeHeightAlpha));
 }
 
 void ACP0Character::RegisterInputActions()

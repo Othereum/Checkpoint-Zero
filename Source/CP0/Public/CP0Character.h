@@ -65,10 +65,10 @@ class CP0_API ACP0Character final : public ACharacter
     USkeletalMeshComponent* Legs;
 
     UPROPERTY(EditAnywhere, Category = "Camera")
-    float ProneEyeHeight = 35.f;
+    float ProneEyeHeight = 35.0f;
 
-    float TargetEyeHeight = 150.f;
-    float PrevEyeHeight = 150.f;
-    float EyeHeightAlpha = 1.f;
-    float EyeHeightBlendTime = 1.f;
+    float TargetEyeHeight = 150.0f;
+    float PrevEyeHeight = 150.0f;
+    float EyeHeightAlpha = 1.0f;
+    float EyeHeightBlendTime = 1.0f;
 };
