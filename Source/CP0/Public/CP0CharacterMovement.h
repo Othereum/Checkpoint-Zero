@@ -55,6 +55,7 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
 
     UFUNCTION()
     void OnRep_Posture(EPosture Prev);
+    void PostPostureChanged();
 
     UPROPERTY(BlueprintAssignable)
     FOnPostureChanged OnPostureChanged;

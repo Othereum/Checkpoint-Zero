@@ -96,19 +96,8 @@ bool UCP0CharacterMovement::TrySetPosture(EPosture New)
 
     PrevPosture = Posture;
     Posture = New;
-    OnPostureChanged.Broadcast(PrevPosture, New);
 
-    const auto Owner = GetCP0Owner();
-    const auto Height = GetHalfHeight(New);
-    const auto Capsule = Owner->GetCapsuleComponent();
-    const auto SwitchTime = GetPostureSwitchTime(PrevPosture, New);
-    Owner->AddActorLocalOffset(
-        {0.0f, 0.0f, Capsule->GetComponentScale().Z * (Height - Capsule->GetUnscaledCapsuleHalfHeight())});
-    Owner->SetEyeHeightWithBlend(Owner->GetDefaultEyeHeight(New), SwitchTime);
-    Capsule->SetCapsuleHalfHeight(Height);
-    Owner->GetMesh()->SetRelativeLocation({0.0f, 0.0f, -Height});
-
-    NextPostureSwitch = CurTime() + SwitchTime;
+    PostPostureChanged();
     return true;
 }
 
@@ -205,7 +194,23 @@ float UCP0CharacterMovement::CurTime() const
 void UCP0CharacterMovement::OnRep_Posture(EPosture Prev)
 {
     PrevPosture = Prev;
-    OnPostureChanged.Broadcast(Prev, Posture);
+    PostPostureChanged();
+}
+
+void UCP0CharacterMovement::PostPostureChanged()
+{
+    const auto Owner = GetCP0Owner();
+    const auto Height = GetHalfHeight(Posture);
+    const auto Capsule = Owner->GetCapsuleComponent();
+    const auto SwitchTime = GetPostureSwitchTime(PrevPosture, Posture);
+    Owner->AddActorLocalOffset(
+        {0.0f, 0.0f, Capsule->GetComponentScale().Z * (Height - Capsule->GetUnscaledCapsuleHalfHeight())});
+    Owner->SetEyeHeightWithBlend(Owner->GetDefaultEyeHeight(Posture), SwitchTime);
+    Capsule->SetCapsuleHalfHeight(Height);
+    Owner->GetMesh()->SetRelativeLocation({0.0f, 0.0f, -Height});
+
+    NextPostureSwitch = CurTime() + SwitchTime;
+    OnPostureChanged.Broadcast(PrevPosture, Posture);
 }
 
 UCP0CharacterMovement* FMovementActionBase::GetObject(ACP0Character* Character)
