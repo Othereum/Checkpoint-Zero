@@ -38,27 +38,20 @@ class CP0_API ACP0Character final : public ACharacter
     void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
   private:
-    friend struct FSprintAction;
     friend UCP0CharacterMovement; 
 
     void InterpEyeHeight(float DeltaTime);
 
-    void RegisterInputActions();
-    void DispatchInputAction(FName Name, EInputAction Type);
-    void BindInputAction(UInputComponent* Input, FName Name);
-
-    template <class Action>
-    void RegisterInputAction(FName Name);
-
     UFUNCTION(Server, Reliable, WithValidation)
     void ServerInputAction(FName Name, EInputAction Type);
+    void DispatchInputAction(FName Name, EInputAction Type);
+    void BindInputAction(UInputComponent* Input, FName Name);
 
     void MoveForward(float AxisValue);
     void MoveRight(float AxisValue);
     void Turn(float AxisValue);
     void LookUp(float AxisValue);
 
-    TMap<FName, void (*)(ACP0Character*, EInputAction)> InputActionMap;
 
     UPROPERTY(EditAnywhere, Category = "Camera")
     float ProneEyeHeight = 35.0f;
