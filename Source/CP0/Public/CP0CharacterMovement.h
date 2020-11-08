@@ -43,7 +43,7 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     bool IsPostureSwitching() const;
     bool IsProneSwitching() const;
     float GetPostureSwitchTime(EPosture Prev, EPosture New) const;
-    float GetHalfHeight(EPosture P) const;
+    float GetDefaultHalfHeight(EPosture P) const;
 
   protected:
     void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;

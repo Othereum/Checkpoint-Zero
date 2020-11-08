@@ -42,6 +42,7 @@ class CP0_API ACP0Character final : public ACharacter
 
   private:
     friend struct FSprintAction;
+    friend UCP0CharacterMovement; 
 
     void InterpEyeHeight(float DeltaTime);
 

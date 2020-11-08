@@ -147,7 +147,7 @@ float UCP0CharacterMovement::GetPostureSwitchTime(EPosture Prev, EPosture New) c
     return 0.0f;
 }
 
-float UCP0CharacterMovement::GetHalfHeight(EPosture P) const
+float UCP0CharacterMovement::GetDefaultHalfHeight(EPosture P) const
 {
     switch (P)
     {
@@ -200,14 +200,29 @@ void UCP0CharacterMovement::OnRep_Posture(EPosture Prev)
 void UCP0CharacterMovement::PostPostureChanged()
 {
     const auto Owner = GetCP0Owner();
-    const auto Height = GetHalfHeight(Posture);
     const auto Capsule = Owner->GetCapsuleComponent();
     const auto SwitchTime = GetPostureSwitchTime(PrevPosture, Posture);
-    Owner->AddActorLocalOffset(
-        {0.0f, 0.0f, Capsule->GetComponentScale().Z * (Height - Capsule->GetUnscaledCapsuleHalfHeight())});
+    const auto NewHalfHeight = GetDefaultHalfHeight(Posture);
+    const auto HalfHeightAdjust = NewHalfHeight - Capsule->GetUnscaledCapsuleHalfHeight();
+
     Owner->SetEyeHeightWithBlend(Owner->GetDefaultEyeHeight(Posture), SwitchTime);
-    Capsule->SetCapsuleHalfHeight(Height);
-    Owner->GetMesh()->SetRelativeLocation({0.0f, 0.0f, -Height});
+    Owner->BaseTranslationOffset = {0.0f, 0.0f, -NewHalfHeight};
+    Owner->GetMesh()->SetRelativeLocation(Owner->BaseTranslationOffset);
+    Capsule->SetCapsuleHalfHeight(NewHalfHeight);
+
+    if (GetOwnerRole() == ROLE_SimulatedProxy)
+    {
+        const auto ClientData = GetPredictionData_Client_Character();
+        ClientData->MeshTranslationOffset.Z += HalfHeightAdjust;
+        ClientData->OriginalMeshTranslationOffset = ClientData->MeshTranslationOffset;
+
+        bShrinkProxyCapsule = true;
+        AdjustProxyCapsuleSize();
+    }
+    else
+    {
+        Owner->AddActorLocalOffset({0.0f, 0.0f, HalfHeightAdjust});
+    }
 
     NextPostureSwitch = CurTime() + SwitchTime;
     OnPostureChanged.Broadcast(PrevPosture, Posture);
