@@ -26,12 +26,13 @@ class CP0_API ACP0Character final : public ACharacter
     UCP0CharacterMovement* GetCP0Movement() const;
 
     void RecalculateBaseEyeHeight() override {}
+    float PlayAnimMontage(UAnimMontage* AnimMontage, float InPlayRate = 1.0f,
+                          FName StartSectionName = NAME_None) override;
+
     void SetEyeHeight(float NewEyeHeight);
     void SetEyeHeightWithBlend(float NewEyeHeight, float BlendTime);
     float GetDefaultEyeHeight(EPosture Posture) const;
     float GetEyeHeight() const;
-
-    float PlayAnimMontage(UAnimMontage* AnimMontage, float InPlayRate = 1.0f, FName StartSectionName = NAME_None);
 
   protected:
     void BeginPlay() override;
