@@ -7,20 +7,11 @@
 #include "Net/UnrealNetwork.h"
 
 ACP0Character::ACP0Character(const FObjectInitializer& Initializer)
-    : Super{Initializer.SetDefaultSubobjectClass<UCP0CharacterMovement>(ACharacter::CharacterMovementComponentName)},
-      Legs{CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Legs"))}
+    : Super{Initializer.SetDefaultSubobjectClass<UCP0CharacterMovement>(ACharacter::CharacterMovementComponentName)}
 {
     PrimaryActorTick.bCanEverTick = true;
     BaseEyeHeight = 150.0f;
     CrouchedEyeHeight = 100.0f;
-
-    GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
-    GetMesh()->bOwnerNoSee = true;
-
-    Legs->SetupAttachment(GetMesh());
-    Legs->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
-    Legs->bOnlyOwnerSee = true;
-    Legs->bSelfShadowOnly = true;
 
     RegisterInputActions();
 }
@@ -70,21 +61,6 @@ float ACP0Character::GetDefaultEyeHeight(EPosture Posture) const
 float ACP0Character::GetEyeHeight() const
 {
     return BaseEyeHeight + GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
-}
-
-float ACP0Character::PlayAnimMontage(UAnimMontage* AnimMontage, float InPlayRate, FName StartSectionName)
-{
-    if (const auto AnimInst = Legs->GetAnimInstance())
-    {
-        const auto Duration = AnimInst->Montage_Play(AnimMontage, InPlayRate);
-        if (Duration > 0.0f)
-        {
-            if (StartSectionName != NAME_None)
-                AnimInst->Montage_JumpToSection(StartSectionName, AnimMontage);
-        }
-    }
-
-    return Super::PlayAnimMontage(AnimMontage, InPlayRate, StartSectionName);
 }
 
 void ACP0Character::BeginPlay()
