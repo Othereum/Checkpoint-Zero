@@ -16,7 +16,7 @@ void UCP0AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
     MoveSpeed = Velocity.Size2D();
     MoveDirection = CalculateDirection(Velocity, Character->GetActorRotation());
 
-    const auto AimRot = Character->GetControlRotation() - Character->GetActorRotation();
+    const auto AimRot = Character->GetBaseAimRotation() - Character->GetActorRotation();
     AimPitch = FRotator::NormalizeAxis(AimRot.Pitch);
     AimYaw = FRotator::NormalizeAxis(AimRot.Yaw);
    
