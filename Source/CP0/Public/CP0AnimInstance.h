@@ -19,23 +19,23 @@ class CP0_API UCP0AnimInstance : public UAnimInstance
 
   private:
     UPROPERTY(EditAnywhere, meta = (UIMin = 0))
-    float MinSprintSpeed = 400.f;
+    float MinSprintSpeed = 400.0f;
 
     UPROPERTY(EditAnywhere, meta = (UIMin = 0))
-    float MaxPostureAnimWalkSpeed = 100.f;
+    float MaxPostureAnimWalkSpeed = 100.0f;
 
     UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true, UIMin = 0))
-    float MoveSpeed = 0.f;
+    float MoveSpeed = 0.0f;
 
     UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly,
               meta = (AllowPrivateAccess = true, UIMin = -180, UIMax = 180))
-    float MoveDirection = 0.f;
+    float MoveDirection = 0.0f;
 
     UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-    float AimPitch = 0.f;
+    float AimPitch = 0.0f;
 
     UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-    float AimYaw = 0.f;
+    float AimYaw = 0.0f;
 
     UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     EPosture Posture = EPosture::Stand;

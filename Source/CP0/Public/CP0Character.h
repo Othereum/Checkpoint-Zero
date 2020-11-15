@@ -52,7 +52,6 @@ class CP0_API ACP0Character final : public ACharacter
     void Turn(float AxisValue);
     void LookUp(float AxisValue);
 
-
     UPROPERTY(EditAnywhere, Category = "Camera")
     float ProneEyeHeight = 35.0f;
 
