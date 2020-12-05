@@ -11,11 +11,15 @@
 template <class Action>
 static void DispatchInputActionByType(ACP0Character* Character, EInputAction Type);
 
+#define MAKE_ACTION(Name) {TEXT(#Name), &DispatchInputActionByType<F##Name##Action>}
+
 static TMap<FName, void (*)(ACP0Character*, EInputAction)> InputActionMap{
-    {TEXT("Sprint"), &DispatchInputActionByType<FSprintAction>},
-    {TEXT("Crouch"), &DispatchInputActionByType<FCrouchAction>},
-    {TEXT("Prone"), &DispatchInputActionByType<FProneAction>},
+    MAKE_ACTION(Sprint),
+    MAKE_ACTION(Crouch),
+    MAKE_ACTION(Prone),
 };
+
+#undef MAKE_ACTION
 
 ACP0Character::ACP0Character(const FObjectInitializer& Initializer)
     : Super{Initializer.SetDefaultSubobjectClass<UCP0CharacterMovement>(ACharacter::CharacterMovementComponentName)}
@@ -23,7 +27,6 @@ ACP0Character::ACP0Character(const FObjectInitializer& Initializer)
     PrimaryActorTick.bCanEverTick = true;
     BaseEyeHeight = 150.0f;
     CrouchedEyeHeight = 100.0f;
-
 }
 
 UCP0CharacterMovement* ACP0Character::GetCP0Movement() const
