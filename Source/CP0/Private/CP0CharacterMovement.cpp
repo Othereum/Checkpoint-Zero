@@ -101,6 +101,22 @@ bool UCP0CharacterMovement::TrySetPosture(EPosture New)
     const auto SwitchTime = GetPostureSwitchTime(Posture, New);
     const auto NewHalfHeight = GetDefaultHalfHeight(New);
     const auto HalfHeightAdjust = NewHalfHeight - Capsule->GetUnscaledCapsuleHalfHeight();
+    const auto NewPawnLocation = UpdatedComponent->GetComponentLocation() + FVector{0.0f, 0.0f, HalfHeightAdjust};
+
+    if (!bClientSimulation && HalfHeightAdjust > 0.0f)
+    {
+        FCollisionQueryParams CapsuleParams{NAME_None, false, Owner};
+        FCollisionResponseParams ResponseParam;
+        InitCollisionParams(CapsuleParams, ResponseParam);
+
+        const auto CapsuleShape = GetPawnCapsuleCollisionShape(SHRINK_HeightCustom, -HalfHeightAdjust);
+        const auto CollisionChannel = UpdatedComponent->GetCollisionObjectType();
+        const auto bEncroached = GetWorld()->OverlapBlockingTestByChannel(
+            NewPawnLocation, FQuat::Identity, CollisionChannel, CapsuleShape, CapsuleParams, ResponseParam);
+
+        if (bEncroached)
+            return false;
+    }
 
     Owner->SetEyeHeightWithBlend(Owner->GetDefaultEyeHeight(New), SwitchTime);
     Owner->BaseTranslationOffset = {0.0f, 0.0f, -NewHalfHeight};
@@ -118,7 +134,7 @@ bool UCP0CharacterMovement::TrySetPosture(EPosture New)
     }
     else
     {
-        Owner->AddActorLocalOffset({0.0f, 0.0f, HalfHeightAdjust});
+        UpdatedComponent->SetWorldLocation(NewPawnLocation);
     }
 
     PrevPosture = Posture;
