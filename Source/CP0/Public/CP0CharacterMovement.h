@@ -28,30 +28,32 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
 
   public:
     UCP0CharacterMovement();
-    ACP0Character* GetCP0Owner() const;
+    UE_NODISCARD ACP0Character* GetCP0Owner() const;
 
-    float GetMaxSpeed() const override;
-    float GetMaxAcceleration() const override;
+    UE_NODISCARD float GetMaxSpeed() const override;
+    UE_NODISCARD float GetMaxAcceleration() const override;
 
-    bool IsSprinting() const { return bIsSprinting; }
-    bool CanSprint() const;
+    UE_NODISCARD bool IsSprinting() const { return bIsSprinting; }
+    UE_NODISCARD bool CanSprint() const;
     bool TryStartSprint();
     void StopSprint() { bIsSprinting = false; }
 
-    EPosture GetPosture() const { return Posture; }
     bool TrySetPosture(EPosture New);
-    bool IsPostureSwitching() const;
-    bool IsProneSwitching() const;
-    float GetPostureSwitchTime(EPosture Prev, EPosture New) const;
-    float GetDefaultHalfHeight(EPosture P) const;
+    UE_NODISCARD EPosture GetPosture() const { return Posture; }
+    UE_NODISCARD bool IsPostureSwitching() const;
+    UE_NODISCARD bool IsProneSwitching() const;
+    UE_NODISCARD float GetPostureSwitchTime(EPosture Prev, EPosture New) const;
+    UE_NODISCARD float GetDefaultHalfHeight(EPosture P) const;
 
   protected:
     void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
     void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
   private:
+    UE_NODISCARD float CurTime() const;
+
     void ProcessSprint();
-    float CurTime() const;
+    void ProcessProne();
 
     UFUNCTION()
     void OnRep_Posture(EPosture Prev);
@@ -79,6 +81,9 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
 
     UPROPERTY(EditAnywhere, meta = (UIMin = 0))
     float ProneHalfHeight = 34.0f;
+
+    UPROPERTY(EditAnywhere, meta = (UIMin = 0))
+    float ProneLength = 88.0f;
 
     UPROPERTY(EditAnywhere, meta = (UIMin = 0))
     float StandToCrouchTime = 0.5f;

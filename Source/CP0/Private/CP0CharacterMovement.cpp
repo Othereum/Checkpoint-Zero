@@ -211,10 +211,12 @@ void UCP0CharacterMovement::TickComponent(float DeltaTime, ELevelTick TickType,
                                           FActorComponentTickFunction* ThisTickFunction)
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
     if (GetOwnerRole() == ROLE_SimulatedProxy)
         return;
 
     ProcessSprint();
+    ProcessProne();
 }
 
 void UCP0CharacterMovement::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -229,6 +231,38 @@ void UCP0CharacterMovement::ProcessSprint()
 {
     if (IsSprinting() && !CanSprint())
         StopSprint();
+}
+
+void UCP0CharacterMovement::ProcessProne()
+{
+    const auto Owner = GetCP0Owner();
+    if (!Owner->IsLocallyControlled())
+        return;
+
+    if (GetPosture() != EPosture::Prone)
+        return;
+
+    const auto Capsule = Owner->GetCapsuleComponent();
+    const auto Radius = Capsule->GetUnscaledCapsuleRadius();
+    const auto Location = Capsule->GetComponentLocation();
+    const auto Offset = Capsule->GetForwardVector() * (ProneLength - Radius);
+    const auto Channel = Capsule->GetCollisionObjectType();
+    const auto Shape = FCollisionShape::MakeSphere(Radius);
+
+    FCollisionQueryParams Params;
+    Params.AddIgnoredActor(Owner);
+
+    thread_local TArray<FHitResult> Hits;
+    for (const auto& Off : {Offset, -Offset})
+    {
+        if (GetWorld()->SweepMultiByChannel(Hits, Location, Location + Off, FQuat::Identity, Channel, Shape, Params))
+        {
+            for (const auto& Hit : Hits)
+            {
+                AddInputVector(Location - Hit.ImpactPoint, true);
+            }
+        }
+    }
 }
 
 float UCP0CharacterMovement::CurTime() const
