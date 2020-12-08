@@ -28,29 +28,29 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
 
   public:
     UCP0CharacterMovement();
-    UE_NODISCARD ACP0Character* GetCP0Owner() const;
+    ACP0Character* GetCP0Owner() const;
 
-    UE_NODISCARD float GetMaxSpeed() const override;
-    UE_NODISCARD float GetMaxAcceleration() const override;
+    float GetMaxSpeed() const override;
+    float GetMaxAcceleration() const override;
 
-    UE_NODISCARD bool IsSprinting() const { return bIsSprinting; }
-    UE_NODISCARD bool CanSprint() const;
+    bool IsSprinting() const { return bIsSprinting; }
+    bool CanSprint() const;
     bool TryStartSprint();
     void StopSprint() { bIsSprinting = false; }
 
     bool TrySetPosture(EPosture New);
-    UE_NODISCARD EPosture GetPosture() const { return Posture; }
-    UE_NODISCARD bool IsPostureSwitching() const;
-    UE_NODISCARD bool IsProneSwitching() const;
-    UE_NODISCARD float GetPostureSwitchTime(EPosture Prev, EPosture New) const;
-    UE_NODISCARD float GetDefaultHalfHeight(EPosture P) const;
+    EPosture GetPosture() const { return Posture; }
+    bool IsPostureSwitching() const;
+    bool IsProneSwitching() const;
+    float GetPostureSwitchTime(EPosture Prev, EPosture New) const;
+    float GetDefaultHalfHeight(EPosture P) const;
 
   protected:
     void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
     void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
   private:
-    UE_NODISCARD float CurTime() const;
+    float CurTime() const;
 
     void ProcessSprint();
     void ProcessProne();
