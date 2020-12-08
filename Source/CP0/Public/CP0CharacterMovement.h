@@ -61,48 +61,6 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     UPROPERTY(BlueprintAssignable)
     FOnPostureChanged OnPostureChanged;
 
-    UPROPERTY(EditAnywhere, meta = (UIMin = 0))
-    float MaxWalkSpeedProne = 60.0f;
-
-    UPROPERTY(EditAnywhere, meta = (UIMin = 0))
-    float MaxSprintSpeed = 600.0f;
-
-    UPROPERTY(EditAnywhere, meta = (UIMin = -1, UIMax = 1))
-    float MaxSprintAngleCos = 0.1f;
-
-    UPROPERTY(EditAnywhere, meta = (UIMin = 0))
-    float MinSprintSpeed = 10.0f;
-
-    UPROPERTY(EditAnywhere, meta = (UIMin = 0))
-    float MaxAccelerationCrouched = 512.0f;
-
-    UPROPERTY(EditAnywhere, meta = (UIMin = 0))
-    float MaxAccelerationProne = 256.0f;
-
-    UPROPERTY(EditAnywhere, meta = (UIMin = 0))
-    float ProneHalfHeight = 34.0f;
-
-    UPROPERTY(EditAnywhere, meta = (UIMin = 0))
-    float ProneLength = 88.0f;
-
-    UPROPERTY(EditAnywhere, meta = (UIMin = 0))
-    float StandToCrouchTime = 0.5f;
-
-    UPROPERTY(EditAnywhere, meta = (UIMin = 0))
-    float StandToProneTime = 1.5f;
-
-    UPROPERTY(EditAnywhere, meta = (UIMin = 0))
-    float CrouchToStandTime = 0.5f;
-
-    UPROPERTY(EditAnywhere, meta = (UIMin = 0))
-    float CrouchToProneTime = 1.0f;
-
-    UPROPERTY(EditAnywhere, meta = (UIMin = 0))
-    float ProneToStandTime = 1.8f;
-
-    UPROPERTY(EditAnywhere, meta = (UIMin = 0))
-    float ProneToCrouchTime = 1.2f;
-
     float NextPostureSwitch = 0.0f;
 
     UPROPERTY(ReplicatedUsing = OnRep_Posture, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))

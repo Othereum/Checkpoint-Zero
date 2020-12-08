@@ -28,19 +28,16 @@ float UCP0CharacterMovement::GetMaxSpeed() const
     {
     case MOVE_Walking:
     case MOVE_NavWalking:
-        if (IsProneSwitching())
-            return 0.0f;
-
         switch (Posture)
         {
         default:
             ensureNoEntry();
         case EPosture::Stand:
-            return IsSprinting() ? MaxSprintSpeed : MaxWalkSpeed;
+            return IsSprinting() ? 600.0f : MaxWalkSpeed;
         case EPosture::Crouch:
             return MaxWalkSpeedCrouched;
         case EPosture::Prone:
-            return MaxWalkSpeedProne;
+            return 100.0f;
         }
     }
     return Super::GetMaxSpeed();
@@ -48,6 +45,9 @@ float UCP0CharacterMovement::GetMaxSpeed() const
 
 float UCP0CharacterMovement::GetMaxAcceleration() const
 {
+    if (IsProneSwitching())
+        return 0.0f;
+
     switch (Posture)
     {
     default:
@@ -55,14 +55,17 @@ float UCP0CharacterMovement::GetMaxAcceleration() const
     case EPosture::Stand:
         return MaxAcceleration;
     case EPosture::Crouch:
-        return MaxAccelerationCrouched;
+        return 512.0f;
     case EPosture::Prone:
-        return MaxAccelerationProne;
+        return 256.0f;
     }
 }
 
 bool UCP0CharacterMovement::CanSprint() const
 {
+    constexpr auto MinSprintSpeed = 10.0f;
+    constexpr auto MaxSprintAngleCos = 0.1f; // ~=84.26 deg
+
     if (Posture != EPosture::Stand)
         return false;
 
@@ -153,7 +156,7 @@ bool UCP0CharacterMovement::IsPostureSwitching() const
 
 bool UCP0CharacterMovement::IsProneSwitching() const
 {
-    return IsPostureSwitching() && (PrevPosture == EPosture::Prone || Posture == EPosture::Prone);
+    return NextPostureSwitch - 0.1f > CurTime() && (PrevPosture == EPosture::Prone || Posture == EPosture::Prone);
 }
 
 float UCP0CharacterMovement::GetPostureSwitchTime(EPosture Prev, EPosture New) const
@@ -164,27 +167,27 @@ float UCP0CharacterMovement::GetPostureSwitchTime(EPosture Prev, EPosture New) c
         switch (New)
         {
         case EPosture::Crouch:
-            return StandToCrouchTime;
+            return 0.5f;
         case EPosture::Prone:
-            return StandToProneTime;
+            return 1.5f;
         }
         break;
     case EPosture::Crouch:
         switch (New)
         {
         case EPosture::Stand:
-            return CrouchToStandTime;
+            return 0.5f;
         case EPosture::Prone:
-            return CrouchToProneTime;
+            return 1.0f;
         }
         break;
     case EPosture::Prone:
         switch (New)
         {
         case EPosture::Stand:
-            return ProneToStandTime;
+            return 1.8f;
         case EPosture::Crouch:
-            return ProneToCrouchTime;
+            return 1.2f;
         }
         break;
     }
@@ -203,20 +206,17 @@ float UCP0CharacterMovement::GetDefaultHalfHeight(EPosture P) const
     case EPosture::Crouch:
         return CrouchedHalfHeight;
     case EPosture::Prone:
-        return ProneHalfHeight;
+        return 34.0f;
     }
 }
 
 void UCP0CharacterMovement::TickComponent(float DeltaTime, ELevelTick TickType,
                                           FActorComponentTickFunction* ThisTickFunction)
 {
-    Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-    if (GetOwnerRole() == ROLE_SimulatedProxy)
-        return;
-
     ProcessSprint();
     ProcessProne();
+
+    Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
 void UCP0CharacterMovement::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -229,8 +229,13 @@ void UCP0CharacterMovement::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 
 void UCP0CharacterMovement::ProcessSprint()
 {
-    if (IsSprinting() && !CanSprint())
-        StopSprint();
+    switch (GetOwnerRole())
+    {
+    case ROLE_Authority:
+    case ROLE_AutonomousProxy:
+        if (IsSprinting() && !CanSprint())
+            StopSprint();
+    }
 }
 
 void UCP0CharacterMovement::ProcessProne()
@@ -242,27 +247,36 @@ void UCP0CharacterMovement::ProcessProne()
     if (GetPosture() != EPosture::Prone)
         return;
 
+    constexpr auto Radius = 17.0f;
+    constexpr auto HalfLength = 88.0f;
+    constexpr auto OffsetX = -30.0f;
+    constexpr auto HalfDistance = HalfLength - Radius;
+    static_assert(34.0f - HalfLength < OffsetX && OffsetX < HalfLength - 34.0f, "invalid offset");
+
     const auto Capsule = Owner->GetCapsuleComponent();
-    const auto Radius = Capsule->GetUnscaledCapsuleRadius();
     const auto Location = Capsule->GetComponentLocation();
-    const auto Offset = Capsule->GetForwardVector() * (ProneLength - Radius);
+    const auto Forward = Capsule->GetForwardVector();
     const auto Channel = Capsule->GetCollisionObjectType();
     const auto Shape = FCollisionShape::MakeSphere(Radius);
 
     FCollisionQueryParams Params;
     Params.AddIgnoredActor(Owner);
 
-    thread_local TArray<FHitResult> Hits;
-    for (const auto& Off : {Offset, -Offset})
+    FVector Input{0.0f};
+    for (const auto Diff : {HalfDistance, -HalfDistance})
     {
-        if (GetWorld()->SweepMultiByChannel(Hits, Location, Location + Off, FQuat::Identity, Channel, Shape, Params))
+        const auto Offset = Forward * (Diff + OffsetX);
+
+        FHitResult Hit;
+        if (GetWorld()->SweepSingleByChannel(Hit, Location, Location + Offset, FQuat::Identity, Channel, Shape, Params))
         {
-            for (const auto& Hit : Hits)
-            {
-                AddInputVector(Location - Hit.ImpactPoint, true);
-            }
+            Input += (Hit.Location - Hit.ImpactPoint) * Hit.Distance;
         }
     }
+
+    Input = 2.0f * Input.GetClampedToMaxSize(1.0f);
+    Input += ConsumeInputVector().GetClampedToMaxSize(1.0f);
+    AddInputVector(Input, true);
 }
 
 float UCP0CharacterMovement::CurTime() const
