@@ -62,7 +62,7 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     FOnPostureChanged OnPostureChanged;
 
     UPROPERTY(EditAnywhere, meta = (UIMin = 0))
-    float MaxWalkSpeedProne = 50.0f;
+    float MaxWalkSpeedProne = 60.0f;
 
     UPROPERTY(EditAnywhere, meta = (UIMin = 0))
     float MaxSprintSpeed = 600.0f;
