@@ -256,7 +256,6 @@ void UCP0CharacterMovement::ProcessProne()
     const auto Capsule = Owner->GetCapsuleComponent();
     const auto Location = Capsule->GetComponentLocation();
     const auto Forward = Capsule->GetForwardVector();
-    const auto Channel = Capsule->GetCollisionObjectType();
     const auto Shape = FCollisionShape::MakeSphere(Radius);
 
     FCollisionQueryParams Params;
@@ -267,7 +266,8 @@ void UCP0CharacterMovement::ProcessProne()
     {
         const auto Offset = Forward * (Diff + OffsetX);
         FHitResult Hit;
-        if (GetWorld()->SweepSingleByChannel(Hit, Location, Location + Offset, FQuat::Identity, Channel, Shape, Params))
+        if (GetWorld()->SweepSingleByChannel(Hit, Location, Location + Offset, FQuat::Identity, ProneTraceChannel,
+                                             Shape, Params))
         {
             Input += (Hit.Location - Hit.ImpactPoint) * Hit.Distance;
         }

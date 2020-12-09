@@ -63,6 +63,9 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
 
     float NextPostureSwitch = 0.0f;
 
+    UPROPERTY(EditAnywhere)
+    TEnumAsByte<ECollisionChannel> ProneTraceChannel;
+
     UPROPERTY(ReplicatedUsing = OnRep_Posture, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     EPosture Posture = EPosture::Stand;
     EPosture PrevPosture = EPosture::Stand;
