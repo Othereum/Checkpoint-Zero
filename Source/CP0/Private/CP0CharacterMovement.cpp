@@ -45,9 +45,6 @@ float UCP0CharacterMovement::GetMaxSpeed() const
 
 float UCP0CharacterMovement::GetMaxAcceleration() const
 {
-    if (IsProneSwitching())
-        return 0.0f;
-
     switch (Posture)
     {
     default:
@@ -156,7 +153,7 @@ bool UCP0CharacterMovement::IsPostureSwitching() const
 
 bool UCP0CharacterMovement::IsProneSwitching() const
 {
-    return NextPostureSwitch - 0.1f > CurTime() && (PrevPosture == EPosture::Prone || Posture == EPosture::Prone);
+    return NextPostureSwitch - 0.2f > CurTime() && (PrevPosture == EPosture::Prone || Posture == EPosture::Prone);
 }
 
 float UCP0CharacterMovement::GetPostureSwitchTime(EPosture Prev, EPosture New) const
@@ -244,6 +241,9 @@ void UCP0CharacterMovement::ProcessProne()
     if (!Owner->IsLocallyControlled())
         return;
 
+    if (IsProneSwitching())
+        ConsumeInputVector();
+
     if (GetPosture() != EPosture::Prone)
         return;
 
@@ -266,7 +266,6 @@ void UCP0CharacterMovement::ProcessProne()
     for (const auto Diff : {HalfDistance, -HalfDistance})
     {
         const auto Offset = Forward * (Diff + OffsetX);
-
         FHitResult Hit;
         if (GetWorld()->SweepSingleByChannel(Hit, Location, Location + Offset, FQuat::Identity, Channel, Shape, Params))
         {
