@@ -34,6 +34,11 @@ UCP0CharacterMovement* ACP0Character::GetCP0Movement() const
     return CastChecked<UCP0CharacterMovement>(GetCharacterMovement());
 }
 
+bool ACP0Character::IsMoveInputIgnored() const
+{
+    return GetCP0Movement()->IsProneSwitching() || Super::IsMoveInputIgnored();
+}
+
 void ACP0Character::SetEyeHeight(float NewEyeHeight)
 {
     BaseEyeHeight = NewEyeHeight - GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();

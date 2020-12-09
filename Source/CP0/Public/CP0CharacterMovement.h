@@ -30,8 +30,8 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     UCP0CharacterMovement();
     ACP0Character* GetCP0Owner() const;
 
-    float GetMaxSpeed() const override;
-    float GetMaxAcceleration() const override;
+    float GetMaxSpeed() const final;
+    float GetMaxAcceleration() const final;
 
     bool IsSprinting() const { return bIsSprinting; }
     bool CanSprint() const;

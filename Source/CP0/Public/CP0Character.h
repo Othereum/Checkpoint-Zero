@@ -25,7 +25,9 @@ class CP0_API ACP0Character final : public ACharacter
     ACP0Character(const FObjectInitializer& Initializer);
     UCP0CharacterMovement* GetCP0Movement() const;
 
-    void RecalculateBaseEyeHeight() override {}
+    void RecalculateBaseEyeHeight() final {}
+    bool IsMoveInputIgnored() const final;
+
     void SetEyeHeight(float NewEyeHeight);
     void SetEyeHeightWithBlend(float NewEyeHeight, float BlendTime);
     float GetDefaultEyeHeight(EPosture Posture) const;

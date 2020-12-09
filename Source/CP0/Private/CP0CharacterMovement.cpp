@@ -241,9 +241,6 @@ void UCP0CharacterMovement::ProcessProne()
     if (!Owner->IsLocallyControlled())
         return;
 
-    if (IsProneSwitching())
-        ConsumeInputVector();
-
     if (GetPosture() != EPosture::Prone)
         return;
 
