@@ -11,12 +11,7 @@ class ACP0Character;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPostureChanged, EPosture, Prev, EPosture, New);
 
 UENUM(BlueprintType)
-enum class ESprintSpeed : uint8
-{
-    Absolute,
-    Relative,
-    Multiply
-};
+enum class ESprintSpeed : uint8 { Absolute, Relative, Multiply };
 
 /**
  *
@@ -34,7 +29,7 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     float GetMaxAcceleration() const final;
 
     bool IsSprinting() const { return bIsSprinting; }
-    bool CanSprint() const;
+    bool CanSprint(bool bIgnorePosture = false) const;
     bool TryStartSprint();
     void StopSprint() { bIsSprinting = false; }
 
@@ -45,6 +40,11 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     float GetPostureSwitchTime(EPosture Prev, EPosture New) const;
     float GetDefaultHalfHeight(EPosture P) const;
 
+    bool IsWalkingSlow() const { return bIsWalkingSlow; }
+    bool CanWalkSlow() const;
+    bool TryStartWalkingSlow();
+    void StopWalkingSlow() { bIsWalkingSlow = false; }
+
   protected:
     void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
     void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -54,6 +54,7 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
 
     void ProcessSprint();
     void ProcessProne();
+    void ProcessSlowWalk();
 
     UFUNCTION()
     void OnRep_Posture(EPosture Prev);
@@ -72,30 +73,29 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
 
     UPROPERTY(Replicated, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     bool bIsSprinting = false;
+    bool bIsWalkingSlow = false;
 };
 
-struct CP0_API FMovementActionBase
-{
-    [[nodiscard]] static UCP0CharacterMovement* GetObject(class ACP0Character* Character);
+struct CP0_API FInputAction_Sprint {
+    static void Enable(ACP0Character* Character);
+    static void Disable(ACP0Character* Character);
+    static void Toggle(ACP0Character* Character);
 };
 
-struct CP0_API FSprintAction : FMovementActionBase
-{
-    static void Enable(UCP0CharacterMovement* Movement);
-    static void Disable(UCP0CharacterMovement* Movement);
-    static void Toggle(UCP0CharacterMovement* Movement);
+struct CP0_API FInputAction_Crouch {
+    static void Enable(ACP0Character* Character);
+    static void Disable(ACP0Character* Character);
+    static void Toggle(ACP0Character* Character);
 };
 
-struct CP0_API FCrouchAction : FMovementActionBase
-{
-    static void Enable(UCP0CharacterMovement* Movement);
-    static void Disable(UCP0CharacterMovement* Movement);
-    static void Toggle(UCP0CharacterMovement* Movement);
+struct CP0_API FInputAction_Prone {
+    static void Enable(ACP0Character* Character);
+    static void Disable(ACP0Character* Character);
+    static void Toggle(ACP0Character* Character);
 };
 
-struct CP0_API FProneAction : FMovementActionBase
-{
-    static void Enable(UCP0CharacterMovement* Movement);
-    static void Disable(UCP0CharacterMovement* Movement);
-    static void Toggle(UCP0CharacterMovement* Movement);
+struct CP0_API FInputAction_WalkSlow {
+    static void Enable(ACP0Character* Character);
+    static void Disable(ACP0Character* Character);
+    static void Toggle(ACP0Character* Character);
 };
