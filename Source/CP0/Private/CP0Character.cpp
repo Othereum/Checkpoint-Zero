@@ -126,12 +126,18 @@ void ACP0Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 
 void ACP0Character::MoveForward(float AxisValue)
 {
-    AddMovementInput(GetActorForwardVector(), AxisValue);
+    if (!FMath::IsNearlyZero(AxisValue)) {
+        const FRotator Rotation{0.0f, GetControlRotation().Yaw, 0.0f};
+        AddMovementInput(Rotation.Vector(), AxisValue);
+    }
 }
 
 void ACP0Character::MoveRight(float AxisValue)
 {
-    AddMovementInput(GetActorRightVector(), AxisValue);
+    if (!FMath::IsNearlyZero(AxisValue)) {
+        const FRotator Rotation{0.0f, GetControlRotation().Yaw + 90.0f, 0.0f};
+        AddMovementInput(Rotation.Vector(), AxisValue);
+    }
 }
 
 void ACP0Character::Turn(float AxisValue)
@@ -204,8 +210,7 @@ void ACP0Character::BindInputAction(UInputComponent* Input, FName Name)
                 if (CurTime - LastTime <= Settings->DoubleClickTimeout) {
                     DispatchInputAction(Name, EInputAction::Toggle);
                     LastTime = -1.0f;
-                }
-                else {
+                } else {
                     LastTime = CurTime;
                 }
                 break;

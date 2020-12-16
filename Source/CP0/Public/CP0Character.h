@@ -9,16 +9,10 @@
 class UCP0CharacterMovement;
 
 UENUM()
-enum class EInputAction : uint8
-{
-    Enable,
-    Disable,
-    Toggle
-};
+enum class EInputAction : uint8 { Enable, Disable, Toggle };
 
 UCLASS()
-class CP0_API ACP0Character final : public ACharacter
-{
+class CP0_API ACP0Character final : public ACharacter {
     GENERATED_BODY()
 
   public:
@@ -40,7 +34,7 @@ class CP0_API ACP0Character final : public ACharacter
     void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
   private:
-    friend UCP0CharacterMovement; 
+    friend UCP0CharacterMovement;
 
     void InterpEyeHeight(float DeltaTime);
 
