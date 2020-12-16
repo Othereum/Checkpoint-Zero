@@ -10,20 +10,13 @@
  *
  */
 UCLASS()
-class CP0_API UCP0AnimInstance : public UAnimInstance
-{
+class CP0_API UCP0AnimInstance : public UAnimInstance {
     GENERATED_BODY()
 
   public:
     void NativeUpdateAnimation(float DeltaSeconds) override;
 
   private:
-    UPROPERTY(EditAnywhere, meta = (UIMin = 0))
-    float MinSprintSpeed = 400.0f;
-
-    UPROPERTY(EditAnywhere, meta = (UIMin = 0))
-    float MaxPostureAnimWalkSpeed = 100.0f;
-
     UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true, UIMin = 0))
     float MoveSpeed = 0.0f;
 

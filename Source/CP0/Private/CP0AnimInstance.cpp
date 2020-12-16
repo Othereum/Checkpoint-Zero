@@ -23,6 +23,6 @@ void UCP0AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
     const auto Movement = Character->GetCP0Movement();
     Posture = Movement->GetPosture();
     bIsOnGround = Movement->IsMovingOnGround();
-    bIsSprinting = Movement->IsSprinting() && MoveSpeed > MinSprintSpeed;
-    bShouldPlayPostureAnim = MoveSpeed < MaxPostureAnimWalkSpeed || Movement->IsProneSwitching();
+    bIsSprinting = Movement->IsSprinting() && MoveSpeed > Movement->MaxWalkSpeed;
+    bShouldPlayPostureAnim = MoveSpeed < 50.0f || Movement->IsProneSwitching();
 }
