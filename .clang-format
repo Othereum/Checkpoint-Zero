@@ -2,7 +2,7 @@
 BasedOnStyle: Microsoft
 AllowShortFunctionsOnASingleLine: InlineOnly
 AlwaysBreakTemplateDeclarations: 'Yes'
-BreakBeforeBraces: Stroustrup
+BreakBeforeBraces: WebKit
 PointerAlignment: Left
 IncludeCategories:
   - Regex:           '.*\.generated\.h'
