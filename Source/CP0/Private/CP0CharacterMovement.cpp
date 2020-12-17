@@ -9,12 +9,17 @@
 UCP0CharacterMovement::UCP0CharacterMovement()
 {
     SetIsReplicatedByDefault(true);
+
     MaxAcceleration = 1024.0f;
-    CrouchedHalfHeight = 60.0f;
     GroundFriction = 6.0f;
+    BrakingDecelerationWalking = 0.0f;
+
     MaxWalkSpeed = 300.0f;
     MaxWalkSpeedCrouched = 150.0f;
-    BrakingDecelerationWalking = 0.0f;
+    CrouchedHalfHeight = 60.0f;
+
+    bUseControllerDesiredRotation = true;
+    RotationRate.Yaw = 300.0f;
 }
 
 ACP0Character* UCP0CharacterMovement::GetCP0Owner() const
@@ -129,6 +134,13 @@ bool UCP0CharacterMovement::TrySetPosture(EPosture New)
     Owner->GetMesh()->SetRelativeLocation(Owner->BaseTranslationOffset);
     Capsule->SetCapsuleHalfHeight(NewHalfHeight);
 
+    if (New == EPosture::Prone) {
+        RotationRate.Yaw = 100.0f;
+    } else {
+        const auto Default = GetDefault<UCP0CharacterMovement>(GetClass());
+        RotationRate.Yaw = Default->RotationRate.Yaw;
+    }
+
     if (bClientSimulation) {
         const auto ClientData = GetPredictionData_Client_Character();
         ClientData->MeshTranslationOffset.Z += HalfHeightAdjust;
@@ -136,8 +148,7 @@ bool UCP0CharacterMovement::TrySetPosture(EPosture New)
 
         bShrinkProxyCapsule = true;
         AdjustProxyCapsuleSize();
-    }
-    else {
+    } else {
         UpdatedComponent->SetWorldLocation(NewPawnLocation);
     }
 
