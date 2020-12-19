@@ -19,10 +19,11 @@ void UCP0AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
     const auto AimRot = Character->GetBaseAimRotation() - Character->GetActorRotation();
     AimPitch = FRotator::NormalizeAxis(AimRot.Pitch);
     AimYaw = FRotator::NormalizeAxis(AimRot.Yaw);
-   
+
     const auto Movement = Character->GetCP0Movement();
     Posture = Movement->GetPosture();
     bIsOnGround = Movement->IsMovingOnGround();
     bIsSprinting = Movement->IsSprinting() && MoveSpeed > Movement->MaxWalkSpeed;
     bShouldPlayPostureAnim = MoveSpeed < 50.0f || Movement->IsProneSwitching();
+    YawRotationSpeed = MoveSpeed < 10.0f ? Movement->GetYawRotationSpeed() : 0.0f;
 }

@@ -29,10 +29,12 @@ ACP0Character* UCP0CharacterMovement::GetCP0Owner() const
 
 float UCP0CharacterMovement::GetMaxSpeed() const
 {
-    switch (MovementMode) {
+    switch (MovementMode)
+    {
     case MOVE_Walking:
     case MOVE_NavWalking:
-        switch (Posture) {
+        switch (Posture)
+        {
         default:
             ensureNoEntry();
         case EPosture::Stand:
@@ -48,7 +50,8 @@ float UCP0CharacterMovement::GetMaxSpeed() const
 
 float UCP0CharacterMovement::GetMaxAcceleration() const
 {
-    switch (Posture) {
+    switch (Posture)
+    {
     default:
         ensureNoEntry();
     case EPosture::Stand:
@@ -84,13 +87,13 @@ bool UCP0CharacterMovement::TryStartSprint()
     if (!CanSprint(true))
         return false;
 
-    switch (Posture) {
+    switch (Posture)
+    {
+    case EPosture::Prone:
+        return false;
     case EPosture::Crouch:
         if (!TrySetPosture(EPosture::Stand))
             return false;
-        break;
-    case EPosture::Prone:
-        return false;
     }
 
     bIsSprinting = true;
@@ -104,7 +107,6 @@ bool UCP0CharacterMovement::TrySetPosture(EPosture New)
         return true;
 
     const auto bClientSimulation = GetOwnerRole() == ROLE_SimulatedProxy;
-
     if (!bClientSimulation && IsPostureSwitching())
         return false;
 
@@ -115,7 +117,8 @@ bool UCP0CharacterMovement::TrySetPosture(EPosture New)
     const auto HalfHeightAdjust = NewHalfHeight - Capsule->GetUnscaledCapsuleHalfHeight();
     const auto NewPawnLocation = UpdatedComponent->GetComponentLocation() + FVector{0.0f, 0.0f, HalfHeightAdjust};
 
-    if (!bClientSimulation && HalfHeightAdjust > 0.0f) {
+    if (!bClientSimulation && HalfHeightAdjust > 0.0f)
+    {
         FCollisionQueryParams CapsuleParams{NAME_None, false, Owner};
         FCollisionResponseParams ResponseParam;
         InitCollisionParams(CapsuleParams, ResponseParam);
@@ -134,30 +137,23 @@ bool UCP0CharacterMovement::TrySetPosture(EPosture New)
     Owner->GetMesh()->SetRelativeLocation(Owner->BaseTranslationOffset);
     Capsule->SetCapsuleHalfHeight(NewHalfHeight);
 
-    if (New == EPosture::Prone) {
-        RotationRate.Yaw = 100.0f;
-    } else {
-        const auto Default = GetDefault<UCP0CharacterMovement>(GetClass());
-        RotationRate.Yaw = Default->RotationRate.Yaw;
-    }
-
-    if (bClientSimulation) {
+    if (bClientSimulation)
+    {
         const auto ClientData = GetPredictionData_Client_Character();
         ClientData->MeshTranslationOffset.Z += HalfHeightAdjust;
         ClientData->OriginalMeshTranslationOffset = ClientData->MeshTranslationOffset;
-
         bShrinkProxyCapsule = true;
         AdjustProxyCapsuleSize();
-    } else {
+    }
+    else
+    {
         UpdatedComponent->SetWorldLocation(NewPawnLocation);
     }
 
     PrevPosture = Posture;
     Posture = New;
-
     NextPostureSwitch = CurTime() + SwitchTime;
     OnPostureChanged.Broadcast(PrevPosture, Posture);
-
     return true;
 }
 
@@ -173,9 +169,11 @@ bool UCP0CharacterMovement::IsProneSwitching() const
 
 float UCP0CharacterMovement::GetPostureSwitchTime(EPosture Prev, EPosture New) const
 {
-    switch (Prev) {
+    switch (Prev)
+    {
     case EPosture::Stand:
-        switch (New) {
+        switch (New)
+        {
         case EPosture::Crouch:
             return 0.5f;
         case EPosture::Prone:
@@ -183,7 +181,8 @@ float UCP0CharacterMovement::GetPostureSwitchTime(EPosture Prev, EPosture New) c
         }
         break;
     case EPosture::Crouch:
-        switch (New) {
+        switch (New)
+        {
         case EPosture::Stand:
             return 0.5f;
         case EPosture::Prone:
@@ -191,7 +190,8 @@ float UCP0CharacterMovement::GetPostureSwitchTime(EPosture Prev, EPosture New) c
         }
         break;
     case EPosture::Prone:
-        switch (New) {
+        switch (New)
+        {
         case EPosture::Stand:
             return 1.8f;
         case EPosture::Crouch:
@@ -205,7 +205,8 @@ float UCP0CharacterMovement::GetPostureSwitchTime(EPosture Prev, EPosture New) c
 
 float UCP0CharacterMovement::GetDefaultHalfHeight(EPosture P) const
 {
-    switch (P) {
+    switch (P)
+    {
     default:
         ensureNoEntry();
     case EPosture::Stand:
@@ -237,8 +238,11 @@ void UCP0CharacterMovement::TickComponent(float DeltaTime, ELevelTick TickType,
     ProcessSprint();
     ProcessProne();
     ProcessSlowWalk();
+    ProcessTurn();
 
+    const auto PrevYaw = UpdatedComponent->GetComponentRotation().Yaw;
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+    YawRotationSpeed = FMath::FindDeltaAngleDegrees(PrevYaw, UpdatedComponent->GetComponentRotation().Yaw) / DeltaTime;
 }
 
 void UCP0CharacterMovement::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -251,7 +255,8 @@ void UCP0CharacterMovement::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 
 void UCP0CharacterMovement::ProcessSprint()
 {
-    switch (GetOwnerRole()) {
+    switch (GetOwnerRole())
+    {
     case ROLE_Authority:
     case ROLE_AutonomousProxy:
         if (IsSprinting() && !CanSprint())
@@ -283,11 +288,13 @@ void UCP0CharacterMovement::ProcessProne()
     Params.AddIgnoredActor(Owner);
 
     FVector Input{0.0f};
-    for (const auto Diff : {HalfDistance, -HalfDistance}) {
+    for (const auto Diff : {HalfDistance, -HalfDistance})
+    {
         const auto Offset = Forward * (Diff + OffsetX);
         FHitResult Hit;
         if (GetWorld()->SweepSingleByChannel(Hit, Location, Location + Offset, FQuat::Identity, ProneTraceChannel,
-                                             Shape, Params)) {
+                                             Shape, Params))
+        {
             Input += (Hit.Location - Hit.ImpactPoint) * Hit.Distance;
         }
     }
@@ -299,8 +306,27 @@ void UCP0CharacterMovement::ProcessProne()
 
 void UCP0CharacterMovement::ProcessSlowWalk()
 {
-    if (IsWalkingSlow()) {
+    if (IsWalkingSlow())
+    {
         AddInputVector(ConsumeInputVector().GetClampedToMaxSize(0.5f));
+    }
+}
+
+void UCP0CharacterMovement::ProcessTurn()
+{
+    RotationRate.Yaw = GetDefault<ACharacter>(GetOwner()->GetClass())->GetCharacterMovement()->RotationRate.Yaw;
+    switch (Posture)
+    {
+    case EPosture::Prone:
+        RotationRate.Yaw /= 2.0f;
+    case EPosture::Crouch:
+        RotationRate.Yaw /= 2.0f;
+    }
+
+    constexpr auto MaxSpeed = 10.0f;
+    if (Velocity.SizeSquared() > MaxSpeed * MaxSpeed)
+    {
+        RotationRate.Yaw *= 2.0f;
     }
 }
 
@@ -311,7 +337,8 @@ float UCP0CharacterMovement::CurTime() const
 
 void UCP0CharacterMovement::OnRep_Posture(EPosture Prev)
 {
-    if (GetOwnerRole() == ROLE_SimulatedProxy) {
+    if (GetOwnerRole() == ROLE_SimulatedProxy)
+    {
         const auto New = Posture;
         Posture = Prev;
         TrySetPosture(New);

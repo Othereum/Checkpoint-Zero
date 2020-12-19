@@ -24,11 +24,17 @@ class CP0_API UCP0AnimInstance : public UAnimInstance {
               meta = (AllowPrivateAccess = true, UIMin = -180, UIMax = 180))
     float MoveDirection = 0.0f;
 
-    UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+    UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly,
+              meta = (AllowPrivateAccess = true, UIMin = -90, UIMax = 90))
     float AimPitch = 0.0f;
 
-    UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+    UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly,
+              meta = (AllowPrivateAccess = true, UIMin = -180, UIMax = 180))
     float AimYaw = 0.0f;
+
+    UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly,
+              meta = (AllowPrivateAccess = true, UIMin = -180, UIMax = 180))
+    float YawRotationSpeed = 0.0f;
 
     UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     EPosture Posture = EPosture::Stand;
