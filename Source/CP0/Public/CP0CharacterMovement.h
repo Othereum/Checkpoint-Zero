@@ -11,7 +11,12 @@ class ACP0Character;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPostureChanged, EPosture, Prev, EPosture, New);
 
 UENUM(BlueprintType)
-enum class ESprintSpeed : uint8 { Absolute, Relative, Multiply };
+enum class ESprintSpeed : uint8
+{
+    Absolute,
+    Relative,
+    Multiply
+};
 
 /**
  *
@@ -60,6 +65,7 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     void ProcessSlowWalk();
     void ProcessTurn();
     void ProcessPronePush();
+    void UpdateViewPitchLimit(float BlendTime);
 
     UFUNCTION()
     void OnRep_Posture(EPosture Prev);
@@ -82,25 +88,29 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     bool bIsWalkingSlow = false;
 };
 
-struct CP0_API FInputAction_Sprint {
+struct CP0_API FInputAction_Sprint
+{
     static void Enable(ACP0Character* Character);
     static void Disable(ACP0Character* Character);
     static void Toggle(ACP0Character* Character);
 };
 
-struct CP0_API FInputAction_Crouch {
+struct CP0_API FInputAction_Crouch
+{
     static void Enable(ACP0Character* Character);
     static void Disable(ACP0Character* Character);
     static void Toggle(ACP0Character* Character);
 };
 
-struct CP0_API FInputAction_Prone {
+struct CP0_API FInputAction_Prone
+{
     static void Enable(ACP0Character* Character);
     static void Disable(ACP0Character* Character);
     static void Toggle(ACP0Character* Character);
 };
 
-struct CP0_API FInputAction_WalkSlow {
+struct CP0_API FInputAction_WalkSlow
+{
     static void Enable(ACP0Character* Character);
     static void Disable(ACP0Character* Character);
     static void Toggle(ACP0Character* Character);

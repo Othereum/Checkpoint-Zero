@@ -3,6 +3,7 @@
 #include "CP0CharacterMovement.h"
 #include "CP0.h"
 #include "CP0Character.h"
+#include "CP0PCM.h"
 #include "Components/CapsuleComponent.h"
 #include "Net/UnrealNetwork.h"
 
@@ -154,6 +155,7 @@ bool UCP0CharacterMovement::TrySetPosture(EPosture New)
     Posture = New;
     NextPostureSwitch = CurTime() + SwitchTime;
     OnPostureChanged.Broadcast(PrevPosture, Posture);
+    UpdateViewPitchLimit(SwitchTime);
     return true;
 }
 
@@ -319,8 +321,8 @@ void UCP0CharacterMovement::ProcessPronePush()
     {
         const auto Offset = Forward * (Diff + OffsetX);
         FHitResult Hit;
-        if (GetWorld()->SweepSingleByChannel(Hit, Location, Location + Offset, FQuat::Identity, PushTraceChannel,
-                                             Shape, Params))
+        if (GetWorld()->SweepSingleByChannel(Hit, Location, Location + Offset, FQuat::Identity, PushTraceChannel, Shape,
+                                             Params))
         {
             Input += (Hit.Location - Hit.ImpactPoint) * Hit.Distance;
         }
@@ -329,6 +331,27 @@ void UCP0CharacterMovement::ProcessPronePush()
     Input = 2.0f * Input.GetClampedToMaxSize(1.0f);
     Input += ConsumeInputVector().GetClampedToMaxSize(1.0f);
     AddInputVector(Input, true);
+}
+
+void UCP0CharacterMovement::UpdateViewPitchLimit(float BlendTime)
+{
+    const auto PC = PawnOwner->GetController<APlayerController>();
+    if (!PC)
+        return;
+
+    const auto PCM = Cast<ACP0PCM>(PC->PlayerCameraManager);
+    if (!PCM)
+        return;
+
+    const auto Default = GetDefault<ACP0PCM>(PCM->GetClass());
+    auto Min = Default->ViewPitchMin;
+    auto Max = Default->ViewPitchMax;
+    if (Posture == EPosture::Prone)
+    {
+        Min /= 2.0f;
+        Max /= 2.0f;
+    }
+    PCM->SetPitchLimitWithBlend(Min, Max, BlendTime);
 }
 
 void UCP0CharacterMovement::ProcessSlowWalk()

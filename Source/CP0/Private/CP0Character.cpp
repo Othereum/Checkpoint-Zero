@@ -11,7 +11,8 @@
 template <class Action>
 static void DispatchInputActionByType(ACP0Character* Character, EInputAction Type);
 
-struct FInputAction {
+struct FInputAction
+{
     template <class Action>
     static FInputAction Create(bool bSendToServer = true)
     {
@@ -58,9 +59,12 @@ void ACP0Character::SetEyeHeightWithBlend(float NewEyeHeight, float BlendTime)
     EyeHeightBlendTime = BlendTime;
     PrevEyeHeight = GetEyeHeight();
 
-    if (BlendTime > KINDA_SMALL_NUMBER) {
+    if (BlendTime > KINDA_SMALL_NUMBER)
+    {
         EyeHeightAlpha = 0.0f;
-    } else {
+    }
+    else
+    {
         EyeHeightAlpha = 1.0f;
         SetEyeHeight(NewEyeHeight);
     }
@@ -68,7 +72,8 @@ void ACP0Character::SetEyeHeightWithBlend(float NewEyeHeight, float BlendTime)
 
 float ACP0Character::GetDefaultEyeHeight(EPosture Posture) const
 {
-    switch (Posture) {
+    switch (Posture)
+    {
     default:
         ensureNoEntry();
     case EPosture::Stand:
@@ -93,8 +98,8 @@ void ACP0Character::BeginPlay()
 
 void ACP0Character::Tick(float DeltaTime)
 {
-    Super::Tick(DeltaTime);
     InterpEyeHeight(DeltaTime);
+    Super::Tick(DeltaTime);
 }
 
 void ACP0Character::SetupPlayerInputComponent(UInputComponent* Input)
@@ -126,7 +131,8 @@ void ACP0Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 
 void ACP0Character::MoveForward(float AxisValue)
 {
-    if (!FMath::IsNearlyZero(AxisValue)) {
+    if (!FMath::IsNearlyZero(AxisValue))
+    {
         const FRotator Rotation{0.0f, GetControlRotation().Yaw, 0.0f};
         AddMovementInput(Rotation.Vector(), AxisValue);
     }
@@ -134,7 +140,8 @@ void ACP0Character::MoveForward(float AxisValue)
 
 void ACP0Character::MoveRight(float AxisValue)
 {
-    if (!FMath::IsNearlyZero(AxisValue)) {
+    if (!FMath::IsNearlyZero(AxisValue))
+    {
         const FRotator Rotation{0.0f, GetControlRotation().Yaw + 90.0f, 0.0f};
         AddMovementInput(Rotation.Vector(), AxisValue);
     }
@@ -155,7 +162,8 @@ void ACP0Character::LookUp(float AxisValue)
 template <class Action>
 static void DispatchInputActionByType(ACP0Character* Character, EInputAction Type)
 {
-    switch (Type) {
+    switch (Type)
+    {
     case EInputAction::Enable:
         Action::Enable(Character);
         break;
@@ -197,8 +205,10 @@ void ACP0Character::BindInputAction(UInputComponent* Input, FName Name)
         const auto GI = CastChecked<UCP0GameInstance>(GetGameInstance());
         const auto Settings = GI->GetInputSettings();
         const auto Type = Settings->PressTypes.Find(Name);
-        if (ensure(Type != nullptr)) {
-            switch (*Type) {
+        if (ensure(Type != nullptr))
+        {
+            switch (*Type)
+            {
             case EPressType::Press:
                 DispatchInputAction(Name, EInputAction::Toggle);
                 break;
@@ -207,10 +217,13 @@ void ACP0Character::BindInputAction(UInputComponent* Input, FName Name)
                 break;
             case EPressType::DoubleClick: {
                 const auto CurTime = GetGameTimeSinceCreation();
-                if (CurTime - LastTime <= Settings->DoubleClickTimeout) {
+                if (CurTime - LastTime <= Settings->DoubleClickTimeout)
+                {
                     DispatchInputAction(Name, EInputAction::Toggle);
                     LastTime = -1.0f;
-                } else {
+                }
+                else
+                {
                     LastTime = CurTime;
                 }
                 break;
@@ -225,8 +238,10 @@ void ACP0Character::BindInputAction(UInputComponent* Input, FName Name)
         const auto GI = CastChecked<UCP0GameInstance>(GetGameInstance());
         const auto Settings = GI->GetInputSettings();
         const auto Type = Settings->PressTypes.Find(Name);
-        if (ensure(Type != nullptr)) {
-            switch (*Type) {
+        if (ensure(Type != nullptr))
+        {
+            switch (*Type)
+            {
             case EPressType::Release:
                 DispatchInputAction(Name, EInputAction::Toggle);
                 break;
