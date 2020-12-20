@@ -38,7 +38,7 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     bool TryStartSprint();
     void StopSprint() { bIsSprinting = false; }
 
-    bool TrySetPosture(EPosture New);
+    bool TrySetPosture(EPosture New, bool bIgnoreDelay = false);
     EPosture GetPosture() const { return Posture; }
     bool IsPostureSwitching() const;
     bool IsProneSwitching() const;
@@ -64,8 +64,9 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     void ProcessSprint();
     void ProcessSlowWalk();
     void ProcessTurn();
-    void ProcessPronePush();
-    void UpdateViewPitchLimit(float BlendTime);
+    void ProcessPronePush(FVector& ForceInput);
+    void ProcessPronePitch(float DeltaTime, FVector& ForceInput);
+    void UpdateViewPitchLimit(float DeltaTime);
 
     UFUNCTION()
     void OnRep_Posture(EPosture Prev);

@@ -8,7 +8,7 @@ void UCP0AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
     Super::NativeUpdateAnimation(DeltaSeconds);
 
-    const auto Character = CastChecked<ACP0Character>(TryGetPawnOwner(), ECastCheckedType::NullAllowed);
+    const auto* const Character = CastChecked<ACP0Character>(TryGetPawnOwner(), ECastCheckedType::NullAllowed);
     if (!Character)
         return;
 
@@ -20,14 +20,13 @@ void UCP0AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
     AimPitch = FRotator::NormalizeAxis(AimRot.Pitch);
     AimYaw = FRotator::NormalizeAxis(AimRot.Yaw);
 
-    const auto Movement = Character->GetCP0Movement();
+    const auto* const Movement = Character->GetCP0Movement();
     Posture = Movement->GetPosture();
     bIsOnGround = Movement->IsMovingOnGround();
     bIsSprinting = Movement->IsSprinting() && MoveSpeed > Movement->MaxWalkSpeed;
     bShouldPlayPostureAnim = MoveSpeed < 50.0f || Movement->IsProneSwitching();
     YawRotationSpeed = MoveSpeed < 10.0f ? Movement->GetYawRotationSpeed() : 0.0f;
 
-    const auto bIsProne = Posture == EPosture::Prone;
-    FloorPitch = FMath::FInterpTo(FloorPitch, bIsProne ? Movement->CalcFloorPitch() : 0.0f, DeltaSeconds,
-                                  bIsProne ? 10.0f : 1.0f);
+    const auto* const Mesh = Character->GetMesh();
+    MeshPitch = Mesh->GetRelativeRotation().Roll;
 }

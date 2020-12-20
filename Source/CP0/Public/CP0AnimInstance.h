@@ -38,7 +38,7 @@ class CP0_API UCP0AnimInstance final : public UAnimInstance
 
     UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly,
               meta = (AllowPrivateAccess = true, UIMin = -45, UIMax = 45))
-    float FloorPitch = 0.0f;
+    float MeshPitch = 0.0f;
 
     UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     EPosture Posture = EPosture::Stand;
