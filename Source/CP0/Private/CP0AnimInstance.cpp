@@ -26,4 +26,8 @@ void UCP0AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
     bIsSprinting = Movement->IsSprinting() && MoveSpeed > Movement->MaxWalkSpeed;
     bShouldPlayPostureAnim = MoveSpeed < 50.0f || Movement->IsProneSwitching();
     YawRotationSpeed = MoveSpeed < 10.0f ? Movement->GetYawRotationSpeed() : 0.0f;
+
+    const auto bIsProne = Posture == EPosture::Prone;
+    FloorPitch = FMath::FInterpTo(FloorPitch, bIsProne ? Movement->CalcFloorPitch() : 0.0f, DeltaSeconds,
+                                  bIsProne ? 10.0f : 1.0f);
 }

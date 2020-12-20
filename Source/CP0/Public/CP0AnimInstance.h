@@ -10,13 +10,13 @@
  *
  */
 UCLASS()
-class CP0_API UCP0AnimInstance : public UAnimInstance {
+class CP0_API UCP0AnimInstance final : public UAnimInstance
+{
     GENERATED_BODY()
 
-  public:
-    void NativeUpdateAnimation(float DeltaSeconds) override;
-
   private:
+    void NativeUpdateAnimation(float DeltaSeconds) final;
+
     UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true, UIMin = 0))
     float MoveSpeed = 0.0f;
 
@@ -35,6 +35,10 @@ class CP0_API UCP0AnimInstance : public UAnimInstance {
     UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly,
               meta = (AllowPrivateAccess = true, UIMin = -180, UIMax = 180))
     float YawRotationSpeed = 0.0f;
+
+    UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly,
+              meta = (AllowPrivateAccess = true, UIMin = -45, UIMax = 45))
+    float FloorPitch = 0.0f;
 
     UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     EPosture Posture = EPosture::Stand;

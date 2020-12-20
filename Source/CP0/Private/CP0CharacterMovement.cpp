@@ -24,7 +24,7 @@ UCP0CharacterMovement::UCP0CharacterMovement()
 
 ACP0Character* UCP0CharacterMovement::GetCP0Owner() const
 {
-    return CastChecked<ACP0Character>(GetCharacterOwner(), ECastCheckedType::NullAllowed);
+    return CastChecked<ACP0Character>(CharacterOwner, ECastCheckedType::NullAllowed);
 }
 
 float UCP0CharacterMovement::GetMaxSpeed() const
@@ -232,11 +232,38 @@ bool UCP0CharacterMovement::TryStartWalkingSlow()
     return true;
 }
 
+float UCP0CharacterMovement::CalcFloorPitch() const
+{
+    if (!CharacterOwner)
+        return 0.0f;
+
+    const auto World = GetWorld();
+    const auto Capsule = CharacterOwner->GetCapsuleComponent();
+    const auto BaseLoc = Capsule->GetComponentLocation();
+    const auto ForwardOffset = Capsule->GetForwardVector() * Capsule->GetScaledCapsuleRadius();
+    const FVector EndOffset{0.0f, 0.0f, -3.0f * Capsule->GetScaledCapsuleHalfHeight()};
+
+    FHitResult Front, Rear;
+
+    const auto FrontLoc = BaseLoc + ForwardOffset;
+    if (!World->LineTraceSingleByChannel(Front, FrontLoc, FrontLoc + EndOffset, PushTraceChannel))
+        return 0.0f;
+
+    const auto RearLoc = BaseLoc - ForwardOffset;
+    if (!World->LineTraceSingleByChannel(Rear, RearLoc, RearLoc + EndOffset, PushTraceChannel))
+        return 0.0f;
+
+    const auto HeightDiff = Rear.Location.Z - Front.Location.Z;
+    const auto NormalizedHeight = FMath::Abs(HeightDiff) / FVector::Dist(Front.Location, Rear.Location);
+    const auto AbsRadians = FMath::FastAsin(NormalizedHeight);
+    return FMath::RadiansToDegrees(AbsRadians) * FMath::Sign(HeightDiff);
+}
+
 void UCP0CharacterMovement::TickComponent(float DeltaTime, ELevelTick TickType,
                                           FActorComponentTickFunction* ThisTickFunction)
 {
     ProcessSprint();
-    ProcessProne();
+    ProcessPronePush();
     ProcessSlowWalk();
     ProcessTurn();
 
@@ -264,13 +291,13 @@ void UCP0CharacterMovement::ProcessSprint()
     }
 }
 
-void UCP0CharacterMovement::ProcessProne()
+void UCP0CharacterMovement::ProcessPronePush()
 {
-    const auto Owner = GetCP0Owner();
-    if (!Owner->IsLocallyControlled())
+    if (GetPosture() != EPosture::Prone)
         return;
 
-    if (GetPosture() != EPosture::Prone)
+    const auto Owner = GetCP0Owner();
+    if (!Owner->IsLocallyControlled())
         return;
 
     constexpr auto Radius = 17.0f;
@@ -292,7 +319,7 @@ void UCP0CharacterMovement::ProcessProne()
     {
         const auto Offset = Forward * (Diff + OffsetX);
         FHitResult Hit;
-        if (GetWorld()->SweepSingleByChannel(Hit, Location, Location + Offset, FQuat::Identity, ProneTraceChannel,
+        if (GetWorld()->SweepSingleByChannel(Hit, Location, Location + Offset, FQuat::Identity, PushTraceChannel,
                                              Shape, Params))
         {
             Input += (Hit.Location - Hit.ImpactPoint) * Hit.Distance;
@@ -314,14 +341,19 @@ void UCP0CharacterMovement::ProcessSlowWalk()
 
 void UCP0CharacterMovement::ProcessTurn()
 {
-    RotationRate.Yaw = GetDefault<ACharacter>(GetOwner()->GetClass())->GetCharacterMovement()->RotationRate.Yaw;
-    switch (Posture)
-    {
-    case EPosture::Prone:
-        RotationRate.Yaw /= 2.0f;
-    case EPosture::Crouch:
-        RotationRate.Yaw /= 2.0f;
-    }
+    RotationRate.Yaw = [this]() {
+        switch (Posture)
+        {
+        default:
+            ensureNoEntry();
+        case EPosture::Stand:
+            return GetDefaultSelf()->RotationRate.Yaw;
+        case EPosture::Crouch:
+            return 90.0f;
+        case EPosture::Prone:
+            return 45.0f;
+        }
+    }();
 
     constexpr auto MaxSpeed = 10.0f;
     if (Velocity.SizeSquared() > MaxSpeed * MaxSpeed)
@@ -333,6 +365,11 @@ void UCP0CharacterMovement::ProcessTurn()
 float UCP0CharacterMovement::CurTime() const
 {
     return GetWorld()->GetTimeSeconds();
+}
+
+const UCP0CharacterMovement* UCP0CharacterMovement::GetDefaultSelf() const
+{
+    return GetDefault<ACP0Character>(GetCP0Owner()->GetClass())->GetCP0Movement();
 }
 
 void UCP0CharacterMovement::OnRep_Posture(EPosture Prev)
