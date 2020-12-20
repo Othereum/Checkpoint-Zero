@@ -50,12 +50,11 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     bool TryStartWalkingSlow();
     void StopWalkingSlow() { bIsWalkingSlow = false; }
 
-    float GetYawRotationSpeed() const { return YawRotationSpeed; }
     float CalcFloorPitch() const;
 
   protected:
-    void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-    void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+    void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) final;
+    void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const final;
 
   private:
     float CurTime() const;
@@ -75,7 +74,6 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     FOnPostureChanged OnPostureChanged;
 
     float NextPostureSwitch = 0.0f;
-    float YawRotationSpeed = 0.0f;
 
     UPROPERTY(EditAnywhere)
     TEnumAsByte<ECollisionChannel> PushTraceChannel;

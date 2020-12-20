@@ -34,7 +34,9 @@ class CP0_API UCP0AnimInstance final : public UAnimInstance
 
     UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly,
               meta = (AllowPrivateAccess = true, UIMin = -180, UIMax = 180))
-    float YawRotationSpeed = 0.0f;
+    float YawSpeed = 0.0f;
+    float PrevYaw = 0.0f;
+    float YawCalcLag = 0.0f;
 
     UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly,
               meta = (AllowPrivateAccess = true, UIMin = -45, UIMax = 45))

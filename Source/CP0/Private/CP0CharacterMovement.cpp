@@ -20,7 +20,7 @@ UCP0CharacterMovement::UCP0CharacterMovement()
     CrouchedHalfHeight = 60.0f;
 
     bUseControllerDesiredRotation = true;
-    RotationRate.Yaw = 300.0f;
+    RotationRate.Yaw = 90.0f;
 }
 
 ACP0Character* UCP0CharacterMovement::GetCP0Owner() const
@@ -142,24 +142,25 @@ bool UCP0CharacterMovement::TrySetPosture(EPosture New, bool bIgnoreDelay)
 
     const auto OldWalkableFloorAngle = GetWalkableFloorAngle();
     SetWalkableFloorAngle(New == EPosture::Prone ? 30.0f : GetDefaultSelf()->GetWalkableFloorAngle());
-    Capsule->SetCapsuleHalfHeight(NewHalfHeight);
-
+    
     if (!bClientSimulation)
     {
+        Capsule->SetCapsuleHalfHeight(NewHalfHeight);
         FFindFloorResult Result;
         FindFloor(NewPawnLocation, Result, false);
+        Capsule->SetCapsuleHalfHeight(OldHalfHeight);
 
         if (!Result.bWalkableFloor)
         {
-            Capsule->SetCapsuleHalfHeight(OldHalfHeight);
             SetWalkableFloorAngle(OldWalkableFloorAngle);
             return false;
         }
     }
 
+    Owner->SetEyeHeightWithBlend(Owner->GetDefaultEyeHeight(New), SwitchTime);
     Owner->BaseTranslationOffset = {0.0f, 0.0f, -NewHalfHeight};
     Owner->GetMesh()->SetRelativeLocation(Owner->BaseTranslationOffset);
-    Owner->SetEyeHeightWithBlend(Owner->GetDefaultEyeHeight(New), SwitchTime);
+    Capsule->SetCapsuleHalfHeight(NewHalfHeight);
 
     if (bClientSimulation)
     {
@@ -298,9 +299,7 @@ void UCP0CharacterMovement::TickComponent(float DeltaTime, ELevelTick TickType,
     UpdateViewPitchLimit(DeltaTime);
     AddInputVector(2.0f * ForceInput + ConsumeInputVector().GetClampedToMaxSize(1.0f), true);
 
-    const auto PrevYaw = UpdatedComponent->GetComponentRotation().Yaw;
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-    YawRotationSpeed = FMath::FindDeltaAngleDegrees(PrevYaw, UpdatedComponent->GetComponentRotation().Yaw) / DeltaTime;
 }
 
 void UCP0CharacterMovement::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

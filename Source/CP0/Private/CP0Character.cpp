@@ -36,6 +36,8 @@ ACP0Character::ACP0Character(const FObjectInitializer& Initializer)
     PrimaryActorTick.bCanEverTick = true;
     BaseEyeHeight = 150.0f;
     CrouchedEyeHeight = 100.0f;
+    bUseControllerRotationYaw = false;
+    GetReplicatedMovement_Mutable().RotationQuantizationLevel = ERotatorQuantization::ShortComponents;
 }
 
 UCP0CharacterMovement* ACP0Character::GetCP0Movement() const
