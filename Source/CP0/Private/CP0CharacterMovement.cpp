@@ -295,39 +295,33 @@ void UCP0CharacterMovement::ProcessSprint()
 
 void UCP0CharacterMovement::ProcessPronePush()
 {
-    if (GetPosture() != EPosture::Prone)
+    if (Posture != EPosture::Prone)
         return;
 
-    const auto Owner = GetCP0Owner();
+    const auto* const Owner = GetCP0Owner();
     if (!Owner->IsLocallyControlled())
         return;
 
-    constexpr auto Radius = 17.0f;
-    constexpr auto HalfLength = 88.0f;
-    constexpr auto OffsetX = -30.0f;
-    constexpr auto HalfDistance = HalfLength - Radius;
-    static_assert(34.0f - HalfLength < OffsetX && OffsetX < HalfLength - 34.0f, "invalid offset");
-
-    const auto Capsule = Owner->GetCapsuleComponent();
+    const auto* const Capsule = Owner->GetCapsuleComponent();
+    const auto* const DefaultCapsule = GetDefault<ACP0Character>(Owner->GetClass())->GetCapsuleComponent();
+    const auto Radius = Capsule->GetScaledCapsuleRadius();
+    const auto HalfLength = DefaultCapsule->GetScaledCapsuleHalfHeight();
     const auto Location = Capsule->GetComponentLocation();
     const auto Forward = Capsule->GetForwardVector();
-    const auto Shape = FCollisionShape::MakeSphere(Radius);
-
-    FCollisionQueryParams Params;
-    Params.AddIgnoredActor(Owner);
+    const auto Shape = FCollisionShape::MakeBox({0.0f, Radius, 0.0f});
+    constexpr auto OffsetX = -28.0f;
 
     FVector Input{0.0f};
-    for (const auto Diff : {HalfDistance, -HalfDistance})
+    for (const auto Diff : {HalfLength, -HalfLength})
     {
         const auto Offset = Forward * (Diff + OffsetX);
         FHitResult Hit;
-        if (GetWorld()->SweepSingleByChannel(Hit, Location, Location + Offset, FQuat::Identity, PushTraceChannel, Shape,
-                                             Params))
+        if (GetWorld()->SweepSingleByChannel(Hit, Location, Location + Offset, Capsule->GetComponentQuat(),
+                                             PushTraceChannel, Shape))
         {
-            Input += (Hit.Location - Hit.ImpactPoint) * Hit.Distance;
+            Input += (Location - Hit.ImpactPoint) * Hit.Distance;
         }
     }
-
     Input = 2.0f * Input.GetClampedToMaxSize(1.0f);
     Input += ConsumeInputVector().GetClampedToMaxSize(1.0f);
     AddInputVector(Input, true);
