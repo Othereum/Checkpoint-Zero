@@ -290,16 +290,19 @@ void UCP0CharacterMovement::TickComponent(float DeltaTime, ELevelTick TickType,
     if (!IsMovingOnGround())
         TrySetPosture(EPosture::Stand, true);
 
-    FVector ForceInput{0.0f};
     ProcessSprint();
-    ProcessPronePush(ForceInput);
+    ProcessPronePush();
     ProcessSlowWalk();
     ProcessTurn();
-    ProcessPronePitch(DeltaTime, ForceInput);
+    ProcessPronePitch(DeltaTime);
     UpdateViewPitchLimit(DeltaTime);
+
     AddInputVector(2.0f * ForceInput + ConsumeInputVector().GetClampedToMaxSize(1.0f), true);
+    ForceInput = FVector{0.0f};
 
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+    ProcessForceTurn();
 }
 
 void UCP0CharacterMovement::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -321,7 +324,7 @@ void UCP0CharacterMovement::ProcessSprint()
     }
 }
 
-void UCP0CharacterMovement::ProcessPronePush(FVector& ForceInput)
+void UCP0CharacterMovement::ProcessPronePush()
 {
     if (Posture != EPosture::Prone)
         return;
@@ -354,7 +357,7 @@ void UCP0CharacterMovement::ProcessPronePush(FVector& ForceInput)
     ForceInput += Input.GetClampedToMaxSize(1.0f);
 }
 
-void UCP0CharacterMovement::ProcessPronePitch(float DeltaTime, FVector& ForceInput)
+void UCP0CharacterMovement::ProcessPronePitch(float DeltaTime)
 {
     const auto bIsProne = Posture == EPosture::Prone;
     const auto Pitch = bIsProne ? CalcFloorPitch() : 0.0f;
@@ -427,6 +430,31 @@ void UCP0CharacterMovement::ProcessTurn()
     if (Velocity.SizeSquared() > MaxSpeed * MaxSpeed)
     {
         RotationRate.Yaw *= 2.0f;
+    }
+}
+
+void UCP0CharacterMovement::ProcessForceTurn()
+{
+    if (GetOwnerRole() == ROLE_SimulatedProxy)
+        return;
+
+    const auto PC = PawnOwner->GetController();
+    const auto CurYaw = UpdatedComponent->GetComponentRotation().Yaw;
+    auto CtrlRot = PC->GetControlRotation();
+    const auto Delta = FMath::FindDeltaAngleDegrees(CurYaw, CtrlRot.Yaw);
+    const auto Diff = FMath::Abs(Delta) - 90.0f;
+    if (Diff > 0.0f)
+    {
+        const auto Offset = Diff * FMath::Sign(Delta);
+        if (Posture != EPosture::Prone)
+        {
+            UpdatedComponent->AddLocalRotation({0.0f, Offset, 0.0f});
+        }
+        else
+        {
+            CtrlRot.Yaw -= Offset;
+            PC->SetControlRotation(CtrlRot);
+        }
     }
 }
 

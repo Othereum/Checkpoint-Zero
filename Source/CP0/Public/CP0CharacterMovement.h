@@ -63,8 +63,9 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     void ProcessSprint();
     void ProcessSlowWalk();
     void ProcessTurn();
-    void ProcessPronePush(FVector& ForceInput);
-    void ProcessPronePitch(float DeltaTime, FVector& ForceInput);
+    void ProcessForceTurn();
+    void ProcessPronePush();
+    void ProcessPronePitch(float DeltaTime);
     void UpdateViewPitchLimit(float DeltaTime);
 
     UFUNCTION()
@@ -73,6 +74,7 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     UPROPERTY(BlueprintAssignable)
     FOnPostureChanged OnPostureChanged;
 
+    FVector ForceInput{0.0f};
     float NextPostureSwitch = 0.0f;
 
     UPROPERTY(EditAnywhere)
