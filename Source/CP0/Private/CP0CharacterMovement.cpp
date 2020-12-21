@@ -18,6 +18,7 @@ UCP0CharacterMovement::UCP0CharacterMovement()
     MaxWalkSpeed = 300.0f;
     MaxWalkSpeedCrouched = 150.0f;
     CrouchedHalfHeight = 60.0f;
+    PerchRadiusThreshold = 10.0f;
 
     bUseControllerDesiredRotation = true;
     RotationRate.Yaw = 90.0f;
@@ -140,8 +141,12 @@ bool UCP0CharacterMovement::TrySetPosture(EPosture New, bool bIgnoreDelay)
             return false;
     }
 
+    const auto Default = GetDefaultSelf();
     const auto OldWalkableFloorAngle = GetWalkableFloorAngle();
-    SetWalkableFloorAngle(New == EPosture::Prone ? 30.0f : GetDefaultSelf()->GetWalkableFloorAngle());
+    const auto bIsProne = New == EPosture::Prone;
+    SetWalkableFloorAngle(bIsProne ? 30.0f : Default->GetWalkableFloorAngle());
+    bCanWalkOffLedges = !bIsProne;
+    PerchRadiusThreshold = !bIsProne ? Default->PerchRadiusThreshold : Capsule->GetScaledCapsuleRadius();
     
     if (!bClientSimulation)
     {
@@ -153,6 +158,8 @@ bool UCP0CharacterMovement::TrySetPosture(EPosture New, bool bIgnoreDelay)
         if (!Result.bWalkableFloor)
         {
             SetWalkableFloorAngle(OldWalkableFloorAngle);
+            bCanWalkOffLedges = bIsProne;
+            PerchRadiusThreshold = bIsProne ? Default->PerchRadiusThreshold : Capsule->GetScaledCapsuleRadius();
             return false;
         }
     }
