@@ -37,7 +37,6 @@ ACP0Character::ACP0Character(const FObjectInitializer& Initializer)
     BaseEyeHeight = 150.0f;
     CrouchedEyeHeight = 100.0f;
     bUseControllerRotationYaw = false;
-    GetReplicatedMovement_Mutable().RotationQuantizationLevel = ERotatorQuantization::ShortComponents;
 }
 
 UCP0CharacterMovement* ACP0Character::GetCP0Movement() const
@@ -48,6 +47,22 @@ UCP0CharacterMovement* ACP0Character::GetCP0Movement() const
 bool ACP0Character::IsMoveInputIgnored() const
 {
     return GetCP0Movement()->IsProneSwitching() || Super::IsMoveInputIgnored();
+}
+
+FRotator ACP0Character::GetBaseAimRotation() const
+{
+    auto POVRot = Super::GetBaseAimRotation();
+    if (GetLocalRole() == ROLE_SimulatedProxy)
+    {
+        POVRot.Yaw = RemoteViewYaw * 360.0f / 255.0f;
+    }
+    return POVRot;
+}
+
+void ACP0Character::SetRemoteViewYaw(float NewRemoteViewYaw)
+{
+    NewRemoteViewYaw = FRotator::ClampAxis(NewRemoteViewYaw);
+    RemoteViewYaw = static_cast<uint8>(NewRemoteViewYaw * 255.0f / 360.0f);
 }
 
 void ACP0Character::SetEyeHeight(float NewEyeHeight)
@@ -129,6 +144,18 @@ void ACP0Character::InterpEyeHeight(float DeltaTime)
 void ACP0Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+    DOREPLIFETIME_CONDITION(ACP0Character, RemoteViewYaw, COND_SkipOwner);
+}
+
+void ACP0Character::PreReplication(IRepChangedPropertyTracker& ChangedPropertyTracker)
+{
+    Super::PreReplication(ChangedPropertyTracker);
+
+    if (HasAuthority() && GetController())
+    {
+        SetRemoteViewYaw(GetController()->GetControlRotation().Yaw);
+    }
 }
 
 void ACP0Character::MoveForward(float AxisValue)

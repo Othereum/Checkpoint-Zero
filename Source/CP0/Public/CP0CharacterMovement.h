@@ -51,6 +51,7 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     void StopWalkingSlow() { bIsWalkingSlow = false; }
 
     float CalcFloorPitch() const;
+    float GetMeshPitchOffset() const { return MeshPitchOffset; }
 
   protected:
     void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) final;
@@ -76,6 +77,7 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
 
     FVector ForceInput{0.0f};
     float NextPostureSwitch = 0.0f;
+    float MeshPitchOffset = 0.0f;
 
     UPROPERTY(EditAnywhere)
     TEnumAsByte<ECollisionChannel> PushTraceChannel;

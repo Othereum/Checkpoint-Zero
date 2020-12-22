@@ -25,8 +25,10 @@ void UCP0AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
     bIsOnGround = Movement->IsMovingOnGround();
     bIsSprinting = Movement->IsSprinting() && MoveSpeed > Movement->MaxWalkSpeed;
     bShouldPlayPostureAnim = MoveSpeed < 50.0f || Movement->IsProneSwitching();
+    MeshRotOffset.Roll = FMath::FInterpTo(MeshRotOffset.Roll, Movement->GetMeshPitchOffset(), DeltaSeconds,
+                                          Movement->IsProneSwitching() ? 1.0f : 10.0f);
 
-    constexpr auto YawCalcDelay = 1.0f / 30.0f;
+    constexpr auto YawCalcDelay = 1.0f / 20.0f;
     YawCalcLag += DeltaSeconds;
     if (YawCalcLag >= YawCalcDelay)
     {
@@ -35,8 +37,4 @@ void UCP0AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
         PrevYaw = Yaw;
         YawCalcLag = FMath::Fmod(YawCalcLag, YawCalcDelay);
     }
-
-    const auto* const Mesh = Character->GetMesh();
-    MeshPitch = Mesh->GetRelativeRotation().Roll;
 }
-

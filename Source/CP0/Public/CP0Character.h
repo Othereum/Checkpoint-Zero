@@ -27,7 +27,9 @@ class CP0_API ACP0Character final : public ACharacter
 
     void RecalculateBaseEyeHeight() final {}
     bool IsMoveInputIgnored() const final;
+    FRotator GetBaseAimRotation() const final;
 
+    void SetRemoteViewYaw(float NewRemoteViewYaw);
     void SetEyeHeight(float NewEyeHeight);
     void SetEyeHeightWithBlend(float NewEyeHeight, float BlendTime);
     float GetDefaultEyeHeight(EPosture Posture) const;
@@ -36,8 +38,9 @@ class CP0_API ACP0Character final : public ACharacter
   protected:
     void BeginPlay() override;
     void Tick(float DeltaTime) override;
-    void SetupPlayerInputComponent(UInputComponent* InputComp) override;
-    void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+    void SetupPlayerInputComponent(UInputComponent* InputComp) final;
+    void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const final;
+    void PreReplication(IRepChangedPropertyTracker& ChangedPropertyTracker) final;
 
   private:
     friend UCP0CharacterMovement;
@@ -61,4 +64,7 @@ class CP0_API ACP0Character final : public ACharacter
     float PrevEyeHeight = 150.0f;
     float EyeHeightAlpha = 1.0f;
     float EyeHeightBlendTime = 1.0f;
+
+    UPROPERTY(Replicated, Transient)
+    uint8 RemoteViewYaw = 0;
 };

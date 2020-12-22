@@ -17,30 +17,29 @@ class CP0_API UCP0AnimInstance final : public UAnimInstance
   private:
     void NativeUpdateAnimation(float DeltaSeconds) final;
 
+    UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+    FRotator MeshRotOffset;
+
     UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true, UIMin = 0))
-    float MoveSpeed = 0.0f;
+    float MoveSpeed;
 
     UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly,
               meta = (AllowPrivateAccess = true, UIMin = -180, UIMax = 180))
-    float MoveDirection = 0.0f;
+    float MoveDirection;
 
     UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly,
               meta = (AllowPrivateAccess = true, UIMin = -90, UIMax = 90))
-    float AimPitch = 0.0f;
+    float AimPitch;
 
     UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly,
               meta = (AllowPrivateAccess = true, UIMin = -180, UIMax = 180))
-    float AimYaw = 0.0f;
+    float AimYaw;
 
     UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly,
               meta = (AllowPrivateAccess = true, UIMin = -180, UIMax = 180))
-    float YawSpeed = 0.0f;
-    float PrevYaw = 0.0f;
-    float YawCalcLag = 0.0f;
-
-    UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly,
-              meta = (AllowPrivateAccess = true, UIMin = -45, UIMax = 45))
-    float MeshPitch = 0.0f;
+    float YawSpeed;
+    float PrevYaw;
+    float YawCalcLag;
 
     UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     EPosture Posture = EPosture::Stand;

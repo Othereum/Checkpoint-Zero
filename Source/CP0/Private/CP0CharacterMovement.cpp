@@ -340,13 +340,12 @@ void UCP0CharacterMovement::ProcessPronePush()
     if (!Owner->IsLocallyControlled())
         return;
 
-    const auto* const Mesh = Owner->GetMesh();
     const auto* const Capsule = Owner->GetCapsuleComponent();
     const auto* const DefaultCapsule = GetDefault<ACP0Character>(Owner->GetClass())->GetCapsuleComponent();
     const auto Radius = Capsule->GetScaledCapsuleRadius();
     const auto HalfLength = DefaultCapsule->GetScaledCapsuleHalfHeight();
     const auto Location = Capsule->GetComponentLocation();
-    const auto Forward = Mesh->GetRightVector();
+    const auto Forward = Capsule->GetForwardVector().RotateAngleAxis(MeshPitchOffset, Capsule->GetRightVector());
     const auto Shape = FCollisionShape::MakeBox({0.0f, Radius, 0.0f});
     constexpr auto OffsetX = -28.0f;
 
@@ -366,24 +365,17 @@ void UCP0CharacterMovement::ProcessPronePush()
 
 void UCP0CharacterMovement::ProcessPronePitch(float DeltaTime)
 {
-    const auto bIsProne = Posture == EPosture::Prone;
-    const auto Pitch = bIsProne ? CalcFloorPitch() : 0.0f;
-
-    const auto Mesh = GetCP0Owner()->GetMesh();
-    auto Rotation = Mesh->GetRelativeRotation();
-    Rotation.Roll = FMath::FInterpTo(Rotation.Roll, Pitch, DeltaTime, bIsProne ? 10.0f : 1.0f);
-    Mesh->SetRelativeRotation(Rotation);
-
+    MeshPitchOffset = Posture == EPosture::Prone ? CalcFloorPitch() : 0.0f;
     if (PawnOwner->IsLocallyControlled())
     {
         const auto Threshold = GetWalkableFloorAngle();
-        if (Pitch < -Threshold)
+        if (MeshPitchOffset < -Threshold)
         {
-            ForceInput -= PawnOwner->GetActorForwardVector();
+            ForceInput -= UpdatedComponent->GetForwardVector();
         }
-        else if (Pitch > Threshold)
+        else if (MeshPitchOffset > Threshold)
         {
-            ForceInput += PawnOwner->GetActorForwardVector();
+            ForceInput += UpdatedComponent->GetForwardVector();
         }
     }
 }
@@ -402,7 +394,7 @@ void UCP0CharacterMovement::UpdateViewPitchLimit(float DeltaTime)
         Limit /= 2.0f;
 
     const auto* const Mesh = CharacterOwner->GetMesh();
-    Limit -= FVector2D{Mesh->GetRelativeRotation().Roll};
+    Limit -= FVector2D{MeshPitchOffset};
 
     constexpr auto Speed = 2.0f;
     PCM->ViewPitchMin = FMath::FInterpTo(PCM->ViewPitchMin, Limit.X, DeltaTime, Speed);
