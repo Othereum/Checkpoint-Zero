@@ -18,6 +18,14 @@ enum class ESprintSpeed : uint8
     Multiply
 };
 
+enum ESetPostureCheckLevel
+{
+    SPCL_Correction,
+    SPCL_ClientSimulation,
+    SPCL_IgnoreDelay,
+    SPCL_CheckAll,
+};
+
 /**
  *
  */
@@ -38,7 +46,7 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     bool TryStartSprint();
     void StopSprint() { bIsSprinting = false; }
 
-    bool TrySetPosture(EPosture New, bool bIgnoreDelay = false);
+    bool TrySetPosture(EPosture New, ESetPostureCheckLevel CheckLevel = SPCL_CheckAll);
     EPosture GetPosture() const { return Posture; }
     bool IsPostureSwitching() const;
     bool IsProneSwitching() const;
@@ -54,6 +62,7 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     float GetMeshPitchOffset() const { return MeshPitchOffset; }
 
   protected:
+    void BeginPlay() final;
     void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) final;
     void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const final;
 
@@ -63,11 +72,17 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
 
     void ProcessSprint();
     void ProcessSlowWalk();
-    void ProcessTurn();
     void ProcessForceTurn();
     void ProcessPronePush();
     void ProcessPronePitch(float DeltaTime);
+    void UpdateRotationRate();
     void UpdateViewPitchLimit(float DeltaTime);
+
+    bool TrySetPosture_Impl(EPosture New, ESetPostureCheckLevel CheckLevel);
+    void ShrinkPerchRadius();
+
+    UFUNCTION(Client, Reliable)
+    void ClientCorrectPosture(EPosture Prev, EPosture Cur);
 
     UFUNCTION()
     void OnRep_Posture(EPosture Prev);

@@ -14,7 +14,7 @@ static void DispatchInputActionByType(ACP0Character* Character, EInputAction Typ
 struct FInputAction
 {
     template <class Action>
-    static FInputAction Create(bool bSendToServer = true)
+    static FInputAction Create(bool bSendToServer)
     {
         return {&DispatchInputActionByType<Action>, bSendToServer};
     }
@@ -23,12 +23,19 @@ struct FInputAction
     bool bSendToServer;
 };
 
+#define MAKE_INPUT_ACTION(Name, bSendToServer)                                                                         \
+    {                                                                                                                  \
+        TEXT(#Name), FInputAction::Create<FInputAction_##Name>(bSendToServer)                                          \
+    }
+
 static const TMap<FName, FInputAction> InputActionMap{
-    {TEXT("Sprint"), FInputAction::Create<FInputAction_Sprint>()},
-    {TEXT("Crouch"), FInputAction::Create<FInputAction_Crouch>()},
-    {TEXT("Prone"), FInputAction::Create<FInputAction_Prone>()},
-    {TEXT("WalkSlow"), FInputAction::Create<FInputAction_WalkSlow>(false)},
+    MAKE_INPUT_ACTION(Sprint, true),
+    MAKE_INPUT_ACTION(Crouch, true),
+    MAKE_INPUT_ACTION(Prone, true),
+    MAKE_INPUT_ACTION(WalkSlow, false),
 };
+
+#undef MAKE_INPUT_ACTION
 
 ACP0Character::ACP0Character(const FObjectInitializer& Initializer)
     : Super{Initializer.SetDefaultSubobjectClass<UCP0CharacterMovement>(ACharacter::CharacterMovementComponentName)}
@@ -221,10 +228,12 @@ void ACP0Character::DispatchInputAction(FName Name, EInputAction Type)
 {
     const auto Action = InputActionMap.Find(Name);
     if (ensure(Action != nullptr))
+    {
         Action->Dispatcher(this, Type);
 
-    if (Action->bSendToServer && !HasAuthority())
-        ServerInputAction(Name, Type);
+        if (Action->bSendToServer && !HasAuthority())
+            ServerInputAction(Name, Type);
+    }
 }
 
 void ACP0Character::BindInputAction(UInputComponent* Input, FName Name)
