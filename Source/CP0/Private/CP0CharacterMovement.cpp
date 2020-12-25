@@ -276,8 +276,8 @@ void UCP0CharacterMovement::ProcessLanded(const FHitResult& Hit, float remaining
 {
     Super::ProcessLanded(Hit, remainingTime, Iterations);
 
-    Velocity.X = 0.0f;
-    Velocity.Y = 0.0f;
+    Velocity.X *= 0.2f;
+    Velocity.Y *= 0.2f;
 }
 
 bool UCP0CharacterMovement::DoJump(bool bReplayingMoves)
