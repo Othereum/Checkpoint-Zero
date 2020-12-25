@@ -8,8 +8,6 @@
 
 class ACP0Character;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPostureChanged, EPosture, Prev, EPosture, New);
-
 UENUM(BlueprintType)
 enum class ESprintSpeed : uint8
 {
@@ -38,8 +36,9 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     UCP0CharacterMovement();
     ACP0Character* GetCP0Owner() const;
 
-    float GetMaxSpeed() const final;
-    float GetMaxAcceleration() const final;
+    float GetMaxSpeed() const override;
+    float GetMaxAcceleration() const override;
+    bool CanAttemptJump() const override;
 
     bool IsSprinting() const { return bIsSprinting; }
     bool CanSprint(bool bIgnorePosture = false) const;
@@ -62,9 +61,12 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     float GetMeshPitchOffset() const { return MeshPitchOffset; }
 
   protected:
-    void BeginPlay() final;
-    void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) final;
-    void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const final;
+    void BeginPlay() override;
+    void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+    void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+    void OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode) override;
+    void ProcessLanded(const FHitResult& Hit, float remainingTime, int32 Iterations) override;
+    bool DoJump(bool bReplayingMoves) override;
 
   private:
     float CurTime() const;
@@ -86,9 +88,6 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
 
     UFUNCTION()
     void OnRep_Posture(EPosture Prev);
-
-    UPROPERTY(BlueprintAssignable)
-    FOnPostureChanged OnPostureChanged;
 
     FVector ForceInput{0.0f};
     float NextPostureSwitch = 0.0f;

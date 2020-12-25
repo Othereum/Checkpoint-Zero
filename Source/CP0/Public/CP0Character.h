@@ -25,9 +25,9 @@ class CP0_API ACP0Character final : public ACharacter
     ACP0Character(const FObjectInitializer& Initializer);
     UCP0CharacterMovement* GetCP0Movement() const;
 
-    void RecalculateBaseEyeHeight() final {}
-    bool IsMoveInputIgnored() const final;
-    FRotator GetBaseAimRotation() const final;
+    void RecalculateBaseEyeHeight() override {}
+    bool IsMoveInputIgnored() const override;
+    FRotator GetBaseAimRotation() const override;
 
     void SetRemoteViewYaw(float NewRemoteViewYaw);
     void SetEyeHeight(float NewEyeHeight);
@@ -35,12 +35,15 @@ class CP0_API ACP0Character final : public ACharacter
     float GetDefaultEyeHeight(EPosture Posture) const;
     float GetEyeHeight() const;
 
+	UFUNCTION(BlueprintImplementableEvent)
+    void OnPostureChanged(EPosture PrevPosture, EPosture NewPosture);
+
   protected:
     void BeginPlay() override;
     void Tick(float DeltaTime) override;
-    void SetupPlayerInputComponent(UInputComponent* InputComp) final;
-    void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const final;
-    void PreReplication(IRepChangedPropertyTracker& ChangedPropertyTracker) final;
+    void SetupPlayerInputComponent(UInputComponent* InputComp) override;
+    void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+    void PreReplication(IRepChangedPropertyTracker& ChangedPropertyTracker) override;
 
   private:
     friend UCP0CharacterMovement;

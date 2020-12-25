@@ -135,6 +135,8 @@ void ACP0Character::SetupPlayerInputComponent(UInputComponent* Input)
     Input->BindAxis(TEXT("Turn"), this, &ACP0Character::Turn);
     Input->BindAxis(TEXT("LookUp"), this, &ACP0Character::LookUp);
 
+    Input->BindAction(TEXT("Jump"), IE_Pressed, this, &ACP0Character::Jump);
+
     for (const auto& Action : InputActionMap)
         BindInputAction(Input, Action.Key);
 }

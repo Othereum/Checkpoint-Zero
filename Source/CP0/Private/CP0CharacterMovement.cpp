@@ -64,6 +64,11 @@ float UCP0CharacterMovement::GetMaxAcceleration() const
     }
 }
 
+bool UCP0CharacterMovement::CanAttemptJump() const
+{
+    return !IsPostureSwitching() && Super::CanAttemptJump();
+}
+
 bool UCP0CharacterMovement::CanSprint(bool bIgnorePosture) const
 {
     constexpr auto MinSprintSpeed = 10.0f;
@@ -252,6 +257,39 @@ void UCP0CharacterMovement::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
     DOREPLIFETIME(UCP0CharacterMovement, bIsSprinting);
 }
 
+void UCP0CharacterMovement::OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode)
+{
+    Super::OnMovementModeChanged(PreviousMovementMode, PreviousCustomMode);
+
+    if (GetOwnerRole() == ROLE_SimulatedProxy && MovementMode == EMovementMode::MOVE_Falling && Velocity.Z > 100.0f)
+    {
+        switch (PreviousMovementMode)
+        {
+        case MOVE_Walking:
+        case MOVE_NavWalking:
+            CharacterOwner->OnJumped();
+        }
+    }
+}
+
+void UCP0CharacterMovement::ProcessLanded(const FHitResult& Hit, float remainingTime, int32 Iterations)
+{
+    Super::ProcessLanded(Hit, remainingTime, Iterations);
+
+    Velocity.X = 0.0f;
+    Velocity.Y = 0.0f;
+}
+
+bool UCP0CharacterMovement::DoJump(bool bReplayingMoves)
+{
+    if (Posture != EPosture::Stand)
+    {
+        TrySetPosture(EPosture::Stand);
+        return false;
+    }
+    return Super::DoJump(bReplayingMoves);
+}
+
 float UCP0CharacterMovement::CurTime() const
 {
     return GetWorld()->GetTimeSeconds();
@@ -429,7 +467,7 @@ bool UCP0CharacterMovement::TrySetPosture_Impl(EPosture New, ESetPostureCheckLev
     if (CheckLevel > SPCL_Correction)
     {
         NextPostureSwitch = CurTime() + SwitchTime;
-        OnPostureChanged.Broadcast(PrevPosture, Posture);
+        Owner->OnPostureChanged(PrevPosture, Posture);
     }
     else
     {
