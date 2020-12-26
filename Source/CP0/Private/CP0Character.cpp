@@ -39,6 +39,7 @@ static const TMap<FName, FInputAction> InputActionMap{
 
 ACP0Character::ACP0Character(const FObjectInitializer& Initializer)
     : Super{Initializer.SetDefaultSubobjectClass<UCP0CharacterMovement>(ACharacter::CharacterMovementComponentName)},
+      LegsMesh{CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("LegsMesh"))},
       ArmsMesh{CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ArmsMesh"))},
       WeaponMesh{CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"))}
 {
@@ -47,6 +48,8 @@ ACP0Character::ACP0Character(const FObjectInitializer& Initializer)
     CrouchedEyeHeight = 100.0f;
     bUseControllerRotationYaw = false;
 
+    LegsMesh->SetupAttachment(GetMesh());
+    ArmsMesh->SetupAttachment(RootComponent);
     WeaponMesh->SetupAttachment(ArmsMesh, TEXT("R_GunSocket"));
 }
 
@@ -135,6 +138,7 @@ void ACP0Character::Tick(float DeltaTime)
     Super::Tick(DeltaTime);
     InterpEyeHeight(DeltaTime);
     UpdateArmsTransform(DeltaTime);
+    UpdateLegsTransform();
 }
 
 void ACP0Character::SetupPlayerInputComponent(UInputComponent* Input)
@@ -175,6 +179,17 @@ void ACP0Character::UpdateArmsTransform(float DeltaTime)
     const auto ArmsTF = Default->GetRelativeTransform();
     const FTransform ViewTF{AimRot, GetPawnViewLocation()};
     ArmsMesh->SetWorldTransform(ArmsTF * ArmsLocalOffset * ViewTF);
+}
+
+void ACP0Character::UpdateLegsTransform()
+{
+    const auto Default = GetDefault<ACP0Character>(GetClass())->LegsMesh;
+    const auto OffsetX = Default->GetRelativeLocation().Y;
+
+    const FRotator ViewYaw{0.0f, GetBaseAimRotation().Yaw, 0.0f};
+    const auto BaseLoc = GetMesh()->GetComponentLocation();
+
+    LegsMesh->SetWorldLocation(BaseLoc + ViewYaw.Vector() * OffsetX);
 }
 
 void ACP0Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

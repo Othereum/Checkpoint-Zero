@@ -51,6 +51,7 @@ class CP0_API ACP0Character final : public ACharacter
 
     void InterpEyeHeight(float DeltaTime);
     void UpdateArmsTransform(float DeltaTime);
+    void UpdateLegsTransform();
 
     UFUNCTION(Server, Reliable, WithValidation)
     void ServerInputAction(FName Name, EInputAction Type);
@@ -61,6 +62,9 @@ class CP0_API ACP0Character final : public ACharacter
     void MoveRight(float AxisValue);
     void Turn(float AxisValue);
     void LookUp(float AxisValue);
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+    USkeletalMeshComponent* LegsMesh;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     USkeletalMeshComponent* ArmsMesh;
@@ -81,5 +85,5 @@ class CP0_API ACP0Character final : public ACharacter
     float EyeHeightBlendTime = 1.0f;
 
     UPROPERTY(Replicated, Transient)
-    uint8 RemoteViewYaw = 0;
+    uint8 RemoteViewYaw;
 };
