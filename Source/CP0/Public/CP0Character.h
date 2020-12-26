@@ -28,6 +28,7 @@ class CP0_API ACP0Character final : public ACharacter
     void RecalculateBaseEyeHeight() override {}
     bool IsMoveInputIgnored() const override;
     FRotator GetBaseAimRotation() const override;
+    FRotator GetViewRotation() const override;
 
     void SetRemoteViewYaw(float NewRemoteViewYaw);
     void SetEyeHeight(float NewEyeHeight);
@@ -49,6 +50,7 @@ class CP0_API ACP0Character final : public ACharacter
     friend UCP0CharacterMovement;
 
     void InterpEyeHeight(float DeltaTime);
+    void UpdateArmsTransform(float DeltaTime);
 
     UFUNCTION(Server, Reliable, WithValidation)
     void ServerInputAction(FName Name, EInputAction Type);
@@ -59,6 +61,16 @@ class CP0_API ACP0Character final : public ACharacter
     void MoveRight(float AxisValue);
     void Turn(float AxisValue);
     void LookUp(float AxisValue);
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+    USkeletalMeshComponent* ArmsMesh;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+    USkeletalMeshComponent* WeaponMesh;
+
+    FTransform ArmsLocalOffset;
+    FRotator PrevAimRot;
+    FRotator AimRotSpeed;
 
     UPROPERTY(EditAnywhere, Category = "Camera")
     float ProneEyeHeight = 35.0f;

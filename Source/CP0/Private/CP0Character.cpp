@@ -38,12 +38,16 @@ static const TMap<FName, FInputAction> InputActionMap{
 #undef MAKE_INPUT_ACTION
 
 ACP0Character::ACP0Character(const FObjectInitializer& Initializer)
-    : Super{Initializer.SetDefaultSubobjectClass<UCP0CharacterMovement>(ACharacter::CharacterMovementComponentName)}
+    : Super{Initializer.SetDefaultSubobjectClass<UCP0CharacterMovement>(ACharacter::CharacterMovementComponentName)},
+      ArmsMesh{CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ArmsMesh"))},
+      WeaponMesh{CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"))}
 {
     PrimaryActorTick.bCanEverTick = true;
     BaseEyeHeight = 150.0f;
     CrouchedEyeHeight = 100.0f;
     bUseControllerRotationYaw = false;
+
+    WeaponMesh->SetupAttachment(ArmsMesh, TEXT("R_GunSocket"));
 }
 
 UCP0CharacterMovement* ACP0Character::GetCP0Movement() const
@@ -58,12 +62,18 @@ bool ACP0Character::IsMoveInputIgnored() const
 
 FRotator ACP0Character::GetBaseAimRotation() const
 {
-    auto POVRot = Super::GetBaseAimRotation();
-    if (GetLocalRole() == ROLE_SimulatedProxy)
-    {
-        POVRot.Yaw = RemoteViewYaw * 360.0f / 255.0f;
-    }
-    return POVRot;
+    if (Controller)
+        return Controller->GetControlRotation();
+
+    return {RemoteViewPitch * 360.0f / 255.0f, RemoteViewYaw * 360.0f / 255.0f, 0.0f};
+}
+
+FRotator ACP0Character::GetViewRotation() const
+{
+    auto Rotation = Super::GetViewRotation();
+    Rotation += ArmsMesh->GetSocketRotation(TEXT("CameraSocket")) - ArmsMesh->GetComponentRotation();
+    Rotation.Roll = 0.0f;
+    return Rotation;
 }
 
 void ACP0Character::SetRemoteViewYaw(float NewRemoteViewYaw)
@@ -122,8 +132,9 @@ void ACP0Character::BeginPlay()
 
 void ACP0Character::Tick(float DeltaTime)
 {
-    InterpEyeHeight(DeltaTime);
     Super::Tick(DeltaTime);
+    InterpEyeHeight(DeltaTime);
+    UpdateArmsTransform(DeltaTime);
 }
 
 void ACP0Character::SetupPlayerInputComponent(UInputComponent* Input)
@@ -148,6 +159,22 @@ void ACP0Character::InterpEyeHeight(float DeltaTime)
 
     EyeHeightAlpha = FMath::Clamp(EyeHeightAlpha + DeltaTime / EyeHeightBlendTime, 0.0f, 1.0f);
     SetEyeHeight(FMath::CubicInterp(PrevEyeHeight, 0.0f, TargetEyeHeight, 0.0f, EyeHeightAlpha));
+}
+
+void ACP0Character::UpdateArmsTransform(float DeltaTime)
+{
+    const auto AimRot = GetBaseAimRotation().GetNormalized();
+    auto Diff = (AimRot - PrevAimRot).GetNormalized();
+    Diff.Yaw *= 1.0f - FMath::Abs(AimRot.Pitch) / 90.0f;
+
+    AimRotSpeed = FMath::RInterpTo(AimRotSpeed, Diff, DeltaTime, 10.0f);
+    PrevAimRot = AimRot;
+    ArmsLocalOffset.SetRotation(FMath::QInterpTo(ArmsLocalOffset.GetRotation(), AimRotSpeed.Quaternion().Inverse(), DeltaTime, 10.0f));
+
+    const auto Default = GetDefault<ACP0Character>(GetClass())->ArmsMesh;
+    const auto ArmsTF = Default->GetRelativeTransform();
+    const FTransform ViewTF{AimRot, GetPawnViewLocation()};
+    ArmsMesh->SetWorldTransform(ArmsTF * ArmsLocalOffset * ViewTF);
 }
 
 void ACP0Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
