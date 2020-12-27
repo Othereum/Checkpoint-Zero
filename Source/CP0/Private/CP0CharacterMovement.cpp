@@ -17,7 +17,7 @@ UCP0CharacterMovement::UCP0CharacterMovement()
     MaxWalkSpeed = 300.0f;
     MaxWalkSpeedCrouched = 150.0f;
     CrouchedHalfHeight = 60.0f;
-    PerchRadiusThreshold = 10.0f;
+    PerchRadiusThreshold = 17.0f;
 
     bUseControllerDesiredRotation = true;
     RotationRate.Yaw = 90.0f;
@@ -276,8 +276,8 @@ void UCP0CharacterMovement::ProcessLanded(const FHitResult& Hit, float remaining
 {
     Super::ProcessLanded(Hit, remainingTime, Iterations);
 
-    Velocity.X *= 0.2f;
-    Velocity.Y *= 0.2f;
+    Velocity.X *= 0.1f;
+    Velocity.Y *= 0.1f;
 }
 
 bool UCP0CharacterMovement::DoJump(bool bReplayingMoves)

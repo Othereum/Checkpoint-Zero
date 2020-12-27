@@ -8,6 +8,7 @@
 
 class UCP0CharacterMovement;
 class UWeaponComponent;
+class UCameraComponent;
 
 UENUM()
 enum class EInputAction : uint8
@@ -26,6 +27,7 @@ class CP0_API ACP0Character : public ACharacter
     ACP0Character(const FObjectInitializer& Initializer);
     UCP0CharacterMovement* GetCP0Movement() const;
     UWeaponComponent* GetWeaponComp() const { return WeaponComp; }
+    UCameraComponent* GetCamera() const { return Camera; }
 
     void RecalculateBaseEyeHeight() override {}
     bool IsMoveInputIgnored() const override;
@@ -63,6 +65,9 @@ class CP0_API ACP0Character : public ACharacter
     void MoveRight(float AxisValue);
     void Turn(float AxisValue);
     void LookUp(float AxisValue);
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+    UCameraComponent* Camera;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     UWeaponComponent* WeaponComp;

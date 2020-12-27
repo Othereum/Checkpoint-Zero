@@ -5,6 +5,7 @@
 #include "CP0CharacterMovement.h"
 #include "CP0GameInstance.h"
 #include "CP0InputSettings.h"
+#include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "WeaponComponent.h"
@@ -40,6 +41,7 @@ static const TMap<FName, FInputAction> InputActionMap{
 
 ACP0Character::ACP0Character(const FObjectInitializer& Initializer)
     : Super{Initializer.SetDefaultSubobjectClass<UCP0CharacterMovement>(ACharacter::CharacterMovementComponentName)},
+      Camera{CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"))},
       WeaponComp{CreateDefaultSubobject<UWeaponComponent>(TEXT("WeaponComp"))},
       LegsMesh{CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("LegsMesh"))}
 {
@@ -48,6 +50,7 @@ ACP0Character::ACP0Character(const FObjectInitializer& Initializer)
     CrouchedEyeHeight = 100.0f;
     bUseControllerRotationYaw = false;
 
+    Camera->SetupAttachment(RootComponent);
     WeaponComp->SetupAttachment(RootComponent);
     LegsMesh->SetupAttachment(GetMesh());
 }
@@ -138,6 +141,7 @@ void ACP0Character::Tick(float DeltaTime)
     InterpEyeHeight(DeltaTime);
     UpdateLegsTransform();
     WeaponComp->UpdateTransform(DeltaTime);
+    Camera->SetWorldLocationAndRotation(GetPawnViewLocation(), GetViewRotation());
 }
 
 void ACP0Character::SetupPlayerInputComponent(UInputComponent* Input)
