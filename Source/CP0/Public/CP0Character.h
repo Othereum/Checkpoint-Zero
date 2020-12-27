@@ -7,6 +7,7 @@
 #include "CP0Character.generated.h"
 
 class UCP0CharacterMovement;
+class UWeaponComponent;
 
 UENUM()
 enum class EInputAction : uint8
@@ -17,13 +18,14 @@ enum class EInputAction : uint8
 };
 
 UCLASS()
-class CP0_API ACP0Character final : public ACharacter
+class CP0_API ACP0Character : public ACharacter
 {
     GENERATED_BODY()
 
   public:
     ACP0Character(const FObjectInitializer& Initializer);
     UCP0CharacterMovement* GetCP0Movement() const;
+    UWeaponComponent* GetWeaponComp() const { return WeaponComp; }
 
     void RecalculateBaseEyeHeight() override {}
     bool IsMoveInputIgnored() const override;
@@ -50,7 +52,6 @@ class CP0_API ACP0Character final : public ACharacter
     friend UCP0CharacterMovement;
 
     void InterpEyeHeight(float DeltaTime);
-    void UpdateArmsTransform(float DeltaTime);
     void UpdateLegsTransform();
 
     UFUNCTION(Server, Reliable, WithValidation)
@@ -64,17 +65,10 @@ class CP0_API ACP0Character final : public ACharacter
     void LookUp(float AxisValue);
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+    UWeaponComponent* WeaponComp;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     USkeletalMeshComponent* LegsMesh;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-    USkeletalMeshComponent* ArmsMesh;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-    USkeletalMeshComponent* WeaponMesh;
-
-    FTransform ArmsLocalOffset;
-    FRotator PrevAimRot;
-    FRotator AimRotSpeed;
 
     UPROPERTY(EditAnywhere, Category = "Camera")
     float ProneEyeHeight = 35.0f;

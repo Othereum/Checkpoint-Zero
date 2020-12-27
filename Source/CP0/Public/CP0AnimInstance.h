@@ -10,7 +10,7 @@
  *
  */
 UCLASS()
-class CP0_API UCP0AnimInstance final : public UAnimInstance
+class CP0_API UCP0AnimInstance : public UAnimInstance
 {
     GENERATED_BODY()
 
