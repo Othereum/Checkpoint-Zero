@@ -13,6 +13,8 @@ class CP0_API AWeapon : public AActor
   public:
     AWeapon();
 
+    TSubclassOf<UAnimInstance> GetArmsAnimClass() const { return ArmsAnimClass; }
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FTransform ArmsOffset;
 
@@ -23,4 +25,8 @@ class CP0_API AWeapon : public AActor
   private:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     USkeletalMeshComponent* Mesh;
+
+    UPROPERTY(EditDefaultsOnly)
+    TSubclassOf<UAnimInstance> ArmsAnimClass;
 };
+

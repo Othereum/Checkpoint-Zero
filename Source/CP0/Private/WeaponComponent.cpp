@@ -50,3 +50,13 @@ void UWeaponComponent::UpdateTransform(float DeltaTime)
     NewTF *= {AimRot, Owner->GetPawnViewLocation()};
     SetWorldTransform(NewTF);
 }
+
+void UWeaponComponent::SetWeapon(AWeapon* NewWeapon)
+{
+    Weapon = NewWeapon;
+    SetAnimInstanceClass(Weapon->GetArmsAnimClass());
+
+    Weapon->AttachToComponent(this, {EAttachmentRule::KeepRelative, true}, TEXT("R_GunSocket"));
+    Weapon->SetActorRelativeTransform(FTransform::Identity);
+}
+

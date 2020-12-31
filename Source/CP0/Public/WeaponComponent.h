@@ -22,12 +22,15 @@ class CP0_API UWeaponComponent : public USkeletalMeshComponent
     const UWeaponComponent* GetDefaultSelf() const;
     void UpdateTransform(float DeltaTime);
 
+    UFUNCTION(BlueprintCallable)
+    void SetWeapon(AWeapon* NewWeapon);
+
   protected:
     void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
     void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
   private:
-    UPROPERTY(Replicated, Transient, VisibleInstanceOnly, BlueprintReadWrite, meta = (AllowPrivateAccess = true))
+    UPROPERTY(Replicated, Transient, VisibleInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     AWeapon* Weapon;
 
     FTransform LocalOffset;
