@@ -30,6 +30,7 @@ bool AWeapon::IsFiring() const
 void AWeapon::BeginPlay()
 {
     Super::BeginPlay();
+    FireLag = 60.0f / RPM;
 }
 
 void AWeapon::Tick(float DeltaTime)

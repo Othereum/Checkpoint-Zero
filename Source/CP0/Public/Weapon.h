@@ -3,6 +3,7 @@
 #pragma once
 
 #include "GameFramework/Actor.h"
+#include "WeaponAnimInst.h"
 #include "Weapon.generated.h"
 
 class ACP0Character;
@@ -17,7 +18,7 @@ class CP0_API AWeapon : public AActor
     AWeapon();
     ACP0Character* GetCharOwner() const;
     UWeaponComponent* GetWeaponComp() const;
-    TSubclassOf<UAnimInstance> GetArmsAnimClass() const { return ArmsAnimClass; }
+    TSubclassOf<UWeaponAnimInst> GetArmsAnimClass() const { return ArmsAnimClass; }
 
     bool IsFiring() const;
 
@@ -25,26 +26,25 @@ class CP0_API AWeapon : public AActor
     FTransform ArmsOffset;
 
   protected:
-    virtual void BeginPlay() override;
-    virtual void Tick(float DeltaTime) override;
+    void BeginPlay() override;
+    void Tick(float DeltaTime) override;
 
     UFUNCTION(BlueprintImplementableEvent)
     void OnFire();
 
   private:
     void Fire();
-    
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     USkeletalMeshComponent* Mesh;
 
     UPROPERTY(EditDefaultsOnly)
-    TSubclassOf<UAnimInstance> ArmsAnimClass;
+    TSubclassOf<UWeaponAnimInst> ArmsAnimClass;
 
     UPROPERTY(EditAnywhere, meta = (UIMin = 1, ClampMin = 1))
     float RPM = 600.0f;
-    float FireLag = 60.0f / RPM;
+    float FireLag;
 
     UPROPERTY(EditAnywhere)
     bool bAutomatic = true;
 };
-
