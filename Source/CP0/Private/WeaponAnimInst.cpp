@@ -17,5 +17,5 @@ void UWeaponAnimInst::NativeUpdateAnimation(float DeltaSeconds)
 
     const auto* const Movement = Character->GetCP0Movement();
     bIsOnGround = Movement->IsMovingOnGround();
-    bIsSprinting = Movement->IsSprinting() && MoveSpeed > Movement->MaxWalkSpeed;
+    bIsSprinting = bIsOnGround && Movement->IsSprinting() && MoveSpeed > Movement->MaxWalkSpeed;
 }
