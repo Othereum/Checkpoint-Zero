@@ -10,19 +10,62 @@
 #include "Net/UnrealNetwork.h"
 #include "WeaponComponent.h"
 
+template <class...>
+using TVoid = void;
+
+template <class Action, class = void>
+struct TInputDispatcher
+{
+    static constexpr auto bHasToggle = false;
+
+    static void Dispatch(ACP0Character* Character, EInputAction Type)
+    {
+        switch (Type)
+        {
+        case EInputAction::Enable:
+            Action::Enable(Character);
+            break;
+        case EInputAction::Disable:
+            Action::Disable(Character);
+            break;
+        }
+    }
+};
+
 template <class Action>
-static void DispatchInputActionByType(ACP0Character* Character, EInputAction Type);
+struct TInputDispatcher<Action, TVoid<decltype(Action::Toggle(DeclVal<ACP0Character*>()))>>
+{
+    static constexpr auto bHasToggle = true;
+
+    static void Dispatch(ACP0Character* Character, EInputAction Type)
+    {
+        switch (Type)
+        {
+        case EInputAction::Enable:
+            Action::Enable(Character);
+            break;
+        case EInputAction::Disable:
+            Action::Disable(Character);
+            break;
+        case EInputAction::Toggle:
+            Action::Toggle(Character);
+            break;
+        }
+    }
+};
 
 struct FInputAction
 {
     template <class Action>
     static FInputAction Create(bool bSendToServer)
     {
-        return {&DispatchInputActionByType<Action>, bSendToServer};
+        using Dispatcher = TInputDispatcher<Action>;
+        return {&Dispatcher::Dispatch, bSendToServer, Dispatcher::bHasToggle};
     }
 
     void (*Dispatcher)(ACP0Character*, EInputAction);
     bool bSendToServer;
+    bool bHasToggle;
 };
 
 #define MAKE_INPUT_ACTION(Name, bSendToServer)                                                                         \
@@ -31,10 +74,8 @@ struct FInputAction
     }
 
 static const TMap<FName, FInputAction> InputActionMap{
-    MAKE_INPUT_ACTION(Sprint, true),
-    MAKE_INPUT_ACTION(Crouch, true),
-    MAKE_INPUT_ACTION(Prone, true),
-    MAKE_INPUT_ACTION(WalkSlow, false),
+    MAKE_INPUT_ACTION(Sprint, true),    MAKE_INPUT_ACTION(Crouch, true), MAKE_INPUT_ACTION(Prone, true),
+    MAKE_INPUT_ACTION(WalkSlow, false), MAKE_INPUT_ACTION(Fire, true),   MAKE_INPUT_ACTION(Aim, true),
 };
 
 #undef MAKE_INPUT_ACTION
@@ -156,7 +197,7 @@ void ACP0Character::SetupPlayerInputComponent(UInputComponent* Input)
     Input->BindAction(TEXT("Jump"), IE_Pressed, this, &ACP0Character::Jump);
 
     for (const auto& Action : InputActionMap)
-        BindInputAction(Input, Action.Key);
+        BindInputAction(Input, Action.Key, Action.Value.bHasToggle);
 }
 
 void ACP0Character::InterpEyeHeight(float DeltaTime)
@@ -226,25 +267,6 @@ void ACP0Character::LookUp(float AxisValue)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-template <class Action>
-static void DispatchInputActionByType(ACP0Character* Character, EInputAction Type)
-{
-    switch (Type)
-    {
-    case EInputAction::Enable:
-        Action::Enable(Character);
-        break;
-    case EInputAction::Disable:
-        Action::Disable(Character);
-        break;
-    case EInputAction::Toggle:
-        Action::Toggle(Character);
-        break;
-    default:
-        ensureNoEntry();
-    }
-}
-
 void ACP0Character::ServerInputAction_Implementation(FName Name, EInputAction Type)
 {
     DispatchInputAction(Name, Type);
@@ -267,15 +289,18 @@ void ACP0Character::DispatchInputAction(FName Name, EInputAction Type)
     }
 }
 
-void ACP0Character::BindInputAction(UInputComponent* Input, FName Name)
+void ACP0Character::BindInputAction(UInputComponent* Input, FName Name, bool bHasToggle)
 {
-    FInputActionBinding Pressed{Name, IE_Pressed};
-    Pressed.ActionDelegate.GetDelegateForManualSet().BindWeakLambda(this, [=, LastTime = -1.0f]() mutable {
+    if (bHasToggle)
+    {
         const auto GI = CastChecked<UCP0GameInstance>(GetGameInstance());
         const auto Settings = GI->GetInputSettings();
         const auto Type = Settings->PressTypes.Find(Name);
-        if (ensure(Type != nullptr))
-        {
+        if (!ensure(Type))
+            return;
+
+        FInputActionBinding Pressed{Name, IE_Pressed};
+        Pressed.ActionDelegate.GetDelegateForManualSet().BindWeakLambda(this, [=, LastTime = -1.0f]() mutable {
             switch (*Type)
             {
             case EPressType::Press:
@@ -298,17 +323,11 @@ void ACP0Character::BindInputAction(UInputComponent* Input, FName Name)
                 break;
             }
             }
-        }
-    });
-    Input->AddActionBinding(MoveTemp(Pressed));
+        });
+        Input->AddActionBinding(MoveTemp(Pressed));
 
-    FInputActionBinding Released{Name, IE_Released};
-    Released.ActionDelegate.GetDelegateForManualSet().BindWeakLambda(this, [=] {
-        const auto GI = CastChecked<UCP0GameInstance>(GetGameInstance());
-        const auto Settings = GI->GetInputSettings();
-        const auto Type = Settings->PressTypes.Find(Name);
-        if (ensure(Type != nullptr))
-        {
+        FInputActionBinding Released{Name, IE_Released};
+        Released.ActionDelegate.GetDelegateForManualSet().BindWeakLambda(this, [=] {
             switch (*Type)
             {
             case EPressType::Release:
@@ -318,7 +337,21 @@ void ACP0Character::BindInputAction(UInputComponent* Input, FName Name)
                 DispatchInputAction(Name, EInputAction::Disable);
                 break;
             }
-        }
-    });
-    Input->AddActionBinding(MoveTemp(Released));
+        });
+        Input->AddActionBinding(MoveTemp(Released));
+    }
+    else
+    {
+        FInputActionBinding Pressed{Name, IE_Pressed};
+        Pressed.ActionDelegate.GetDelegateForManualSet().BindWeakLambda(this, [=] {
+            DispatchInputAction(Name, EInputAction::Enable);
+        });
+        Input->AddActionBinding(MoveTemp(Pressed));
+
+        FInputActionBinding Released{Name, IE_Released};
+        Released.ActionDelegate.GetDelegateForManualSet().BindWeakLambda(this, [=] {
+            DispatchInputAction(Name, EInputAction::Disable);
+        });
+        Input->AddActionBinding(MoveTemp(Released));
+    }
 }

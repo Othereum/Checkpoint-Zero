@@ -25,6 +25,12 @@ class CP0_API UWeaponComponent : public USkeletalMeshComponent
     UFUNCTION(BlueprintCallable)
     void SetWeapon(AWeapon* NewWeapon);
 
+    UPROPERTY(Replicated, Transient, EditInstanceOnly, BlueprintReadWrite)
+    bool bFiring;
+
+    UPROPERTY(Replicated, Transient, EditInstanceOnly, BlueprintReadWrite)
+    bool bAiming;
+
   protected:
     void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
     void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -37,3 +43,17 @@ class CP0_API UWeaponComponent : public USkeletalMeshComponent
     FRotator PrevAimRot;
     FRotator AimRotSpeed;
 };
+
+struct CP0_API FInputAction_Fire
+{
+    static void Enable(ACP0Character* Character);
+    static void Disable(ACP0Character* Character);
+};
+
+struct CP0_API FInputAction_Aim
+{
+    static void Enable(ACP0Character* Character);
+    static void Disable(ACP0Character* Character);
+    static void Toggle(ACP0Character* Character);
+};
+

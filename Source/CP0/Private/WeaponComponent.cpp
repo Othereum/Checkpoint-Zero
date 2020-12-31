@@ -30,6 +30,8 @@ void UWeaponComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(UWeaponComponent, Weapon);
+    DOREPLIFETIME(UWeaponComponent, bFiring);
+    DOREPLIFETIME(UWeaponComponent, bAiming);
 }
 
 void UWeaponComponent::UpdateTransform(float DeltaTime)
@@ -53,10 +55,45 @@ void UWeaponComponent::UpdateTransform(float DeltaTime)
 
 void UWeaponComponent::SetWeapon(AWeapon* NewWeapon)
 {
+    if (Weapon)
+    {
+        Weapon->SetOwner(nullptr);
+        Weapon->SetInstigator(nullptr);
+    }
+
     Weapon = NewWeapon;
     SetAnimInstanceClass(Weapon->GetArmsAnimClass());
 
     Weapon->AttachToComponent(this, {EAttachmentRule::KeepRelative, true}, TEXT("R_GunSocket"));
     Weapon->SetActorRelativeTransform(FTransform::Identity);
+
+    const auto Owner = GetCharOwner();
+    Weapon->SetOwner(Owner);
+    Weapon->SetInstigator(Owner);
 }
 
+void FInputAction_Fire::Enable(ACP0Character* Character)
+{
+    Character->GetWeaponComp()->bFiring = true;
+}
+
+void FInputAction_Fire::Disable(ACP0Character* Character)
+{
+    Character->GetWeaponComp()->bFiring = false;
+}
+
+void FInputAction_Aim::Enable(ACP0Character* Character)
+{
+    Character->GetWeaponComp()->bAiming = true;
+}
+
+void FInputAction_Aim::Disable(ACP0Character* Character)
+{
+    Character->GetWeaponComp()->bAiming = false;
+}
+
+void FInputAction_Aim::Toggle(ACP0Character* Character)
+{
+    auto& bAiming = Character->GetWeaponComp()->bAiming;
+    bAiming = !bAiming;
+}

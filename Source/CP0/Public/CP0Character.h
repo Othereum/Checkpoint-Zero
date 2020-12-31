@@ -59,7 +59,7 @@ class CP0_API ACP0Character : public ACharacter
     UFUNCTION(Server, Reliable, WithValidation)
     void ServerInputAction(FName Name, EInputAction Type);
     void DispatchInputAction(FName Name, EInputAction Type);
-    void BindInputAction(UInputComponent* Input, FName Name);
+    void BindInputAction(UInputComponent* Input, FName Name, bool bHasToggle);
 
     void MoveForward(float AxisValue);
     void MoveRight(float AxisValue);
