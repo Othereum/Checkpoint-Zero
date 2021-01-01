@@ -34,7 +34,7 @@ class CP0_API ACP0Character : public ACharacter
     FRotator GetBaseAimRotation() const override;
     FRotator GetViewRotation() const override;
 
-    void SetRemoteViewYaw(float NewRemoteViewYaw);
+    void SetRemoteViewRotation(FRotator Rotation);
     void SetEyeHeight(float NewEyeHeight);
     void SetEyeHeightWithBlend(float NewEyeHeight, float BlendTime);
     float GetDefaultEyeHeight(EPosture Posture) const;
@@ -84,5 +84,8 @@ class CP0_API ACP0Character : public ACharacter
     float EyeHeightBlendTime = 1.0f;
 
     UPROPERTY(Replicated, Transient)
-    uint8 RemoteViewYaw;
+    uint16 RemoteViewPitch16;
+
+    UPROPERTY(Replicated, Transient)
+    uint16 RemoteViewYaw16;
 };

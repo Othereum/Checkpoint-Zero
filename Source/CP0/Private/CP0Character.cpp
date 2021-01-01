@@ -106,12 +106,14 @@ bool ACP0Character::IsMoveInputIgnored() const
     return GetCP0Movement()->IsProneSwitching() || Super::IsMoveInputIgnored();
 }
 
+static constexpr auto AngleCompressRatio = (1 << 16) / 360.0f;
+
 FRotator ACP0Character::GetBaseAimRotation() const
 {
     if (Controller)
         return Controller->GetControlRotation();
 
-    return {RemoteViewPitch * 360.0f / 255.0f, RemoteViewYaw * 360.0f / 255.0f, 0.0f};
+    return {RemoteViewPitch16 / AngleCompressRatio, RemoteViewYaw16 / AngleCompressRatio, 0.0f};
 }
 
 FRotator ACP0Character::GetViewRotation() const
@@ -122,10 +124,10 @@ FRotator ACP0Character::GetViewRotation() const
     return Rotation;
 }
 
-void ACP0Character::SetRemoteViewYaw(float NewRemoteViewYaw)
+void ACP0Character::SetRemoteViewRotation(FRotator Rotation)
 {
-    NewRemoteViewYaw = FRotator::ClampAxis(NewRemoteViewYaw);
-    RemoteViewYaw = static_cast<uint8>(NewRemoteViewYaw * 255.0f / 360.0f);
+    RemoteViewPitch16 = static_cast<uint16>(FRotator::ClampAxis(Rotation.Pitch) * AngleCompressRatio);
+    RemoteViewYaw16 = static_cast<uint16>(FRotator::ClampAxis(Rotation.Yaw) * AngleCompressRatio);
 }
 
 void ACP0Character::SetEyeHeight(float NewEyeHeight)
@@ -224,7 +226,8 @@ void ACP0Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-    DOREPLIFETIME_CONDITION(ACP0Character, RemoteViewYaw, COND_SkipOwner);
+    DOREPLIFETIME_CONDITION(ACP0Character, RemoteViewPitch16, COND_SkipOwner);
+    DOREPLIFETIME_CONDITION(ACP0Character, RemoteViewYaw16, COND_SkipOwner);
 }
 
 void ACP0Character::PreReplication(IRepChangedPropertyTracker& ChangedPropertyTracker)
@@ -233,7 +236,7 @@ void ACP0Character::PreReplication(IRepChangedPropertyTracker& ChangedPropertyTr
 
     if (HasAuthority() && GetController())
     {
-        SetRemoteViewYaw(GetController()->GetControlRotation().Yaw);
+        SetRemoteViewRotation(GetController()->GetControlRotation());
     }
 }
 
