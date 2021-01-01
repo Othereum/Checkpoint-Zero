@@ -345,16 +345,11 @@ void ACP0Character::BindInputAction(UInputComponent* Input, FName Name, bool bHa
     }
     else
     {
-        FInputActionBinding Pressed{Name, IE_Pressed};
-        Pressed.ActionDelegate.GetDelegateForManualSet().BindWeakLambda(this, [=] {
-            DispatchInputAction(Name, EInputAction::Enable);
-        });
-        Input->AddActionBinding(MoveTemp(Pressed));
+        Input->BindAction<TDelegate<void(FName, EInputAction)>>(
+            Name, IE_Pressed, this, &ACP0Character::DispatchInputAction, Name, EInputAction::Enable);
 
-        FInputActionBinding Released{Name, IE_Released};
-        Released.ActionDelegate.GetDelegateForManualSet().BindWeakLambda(this, [=] {
-            DispatchInputAction(Name, EInputAction::Disable);
-        });
-        Input->AddActionBinding(MoveTemp(Released));
+        Input->BindAction<TDelegate<void(FName, EInputAction)>>(
+            Name, IE_Released, this, &ACP0Character::DispatchInputAction, Name, EInputAction::Disable);
     }
 }
+

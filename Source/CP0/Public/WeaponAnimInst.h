@@ -14,7 +14,7 @@ class CP0_API UWeaponAnimInst : public UAnimInstance
 	GENERATED_BODY()
 	
   private:
-    void NativeUpdateAnimation(float DeltaSeconds) final;
+    void NativeUpdateAnimation(float DeltaSeconds) override;
 
     UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true, UIMin = 0))
     float MoveSpeed;

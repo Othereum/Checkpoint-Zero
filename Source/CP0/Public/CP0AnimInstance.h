@@ -15,7 +15,7 @@ class CP0_API UCP0AnimInstance : public UAnimInstance
     GENERATED_BODY()
 
   private:
-    void NativeUpdateAnimation(float DeltaSeconds) final;
+    void NativeUpdateAnimation(float DeltaSeconds) override;
 
     UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     FRotator MeshRotOffset;

@@ -28,13 +28,16 @@ void UCP0AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
     MeshRotOffset.Roll = FMath::FInterpTo(MeshRotOffset.Roll, Movement->GetMeshPitchOffset(), DeltaSeconds,
                                           Movement->IsProneSwitching() ? 1.0f : 10.0f);
 
-    constexpr auto YawCalcDelay = 1.0f / 20.0f;
+    constexpr auto YawCalcDelay = 1.0f / 10.0f;
     YawCalcLag += DeltaSeconds;
     if (YawCalcLag >= YawCalcDelay)
     {
+        const auto SkippedFrames = FMath::TruncToFloat(YawCalcLag / YawCalcDelay);
+        const auto SkippedTime = YawCalcDelay * SkippedFrames;
+        YawCalcLag -= SkippedTime;
+
         const auto Yaw = Character->GetActorRotation().Yaw;
-        YawSpeed = MoveSpeed < 10.0f ? FMath::FindDeltaAngleDegrees(PrevYaw, Yaw) / YawCalcLag : 0.0f;
+        YawSpeed = MoveSpeed < 10.0f ? FMath::FindDeltaAngleDegrees(PrevYaw, Yaw) / SkippedTime : 0.0f;
         PrevYaw = Yaw;
-        YawCalcLag = FMath::Fmod(YawCalcLag, YawCalcDelay);
     }
 }
