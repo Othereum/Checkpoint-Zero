@@ -24,12 +24,7 @@ class CP0_API UWeaponComponent : public USkeletalMeshComponent
 
     UFUNCTION(BlueprintCallable)
     void SetWeapon(AWeapon* NewWeapon);
-
-    UPROPERTY(Replicated, Transient, EditInstanceOnly, BlueprintReadWrite)
-    bool bFiring;
-
-    UPROPERTY(Replicated, Transient, EditInstanceOnly, BlueprintReadWrite)
-    bool bAiming;
+    AWeapon* GetWeapon() const { return Weapon; }
 
   protected:
     void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;

@@ -30,8 +30,6 @@ void UWeaponComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(UWeaponComponent, Weapon);
-    DOREPLIFETIME(UWeaponComponent, bFiring);
-    DOREPLIFETIME(UWeaponComponent, bAiming);
 }
 
 void UWeaponComponent::UpdateTransform(float DeltaTime)
@@ -74,26 +72,30 @@ void UWeaponComponent::SetWeapon(AWeapon* NewWeapon)
 
 void FInputAction_Fire::Enable(ACP0Character* Character)
 {
-    Character->GetWeaponComp()->bFiring = true;
+    if (const auto Weapon = Character->GetWeaponComp()->GetWeapon())
+        Weapon->TrySetFiring(true);
 }
 
 void FInputAction_Fire::Disable(ACP0Character* Character)
 {
-    Character->GetWeaponComp()->bFiring = false;
+    if (const auto Weapon = Character->GetWeaponComp()->GetWeapon())
+        Weapon->TrySetFiring(false);
 }
 
 void FInputAction_Aim::Enable(ACP0Character* Character)
 {
-    Character->GetWeaponComp()->bAiming = true;
+    if (const auto Weapon = Character->GetWeaponComp()->GetWeapon())
+        Weapon->TrySetAiming(true);
 }
 
 void FInputAction_Aim::Disable(ACP0Character* Character)
 {
-    Character->GetWeaponComp()->bAiming = false;
+    if (const auto Weapon = Character->GetWeaponComp()->GetWeapon())
+        Weapon->TrySetAiming(false);
 }
 
 void FInputAction_Aim::Toggle(ACP0Character* Character)
 {
-    auto& bAiming = Character->GetWeaponComp()->bAiming;
-    bAiming = !bAiming;
+    if (const auto Weapon = Character->GetWeaponComp()->GetWeapon())
+        Weapon->TrySetAiming(!Weapon->IsAiming());
 }
