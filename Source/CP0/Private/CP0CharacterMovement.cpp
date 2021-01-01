@@ -71,17 +71,17 @@ bool UCP0CharacterMovement::CanAttemptJump() const
 
 bool UCP0CharacterMovement::CanSprint(bool bIgnorePosture) const
 {
-    constexpr auto MinSprintSpeed = 10.0f;
+    constexpr auto MinSprintSpeed = 45.0f;
     constexpr auto MaxSprintAngleCos = 0.1f; // ~=84.26 deg
 
     if (!bIgnorePosture && Posture != EPosture::Stand)
         return false;
 
-    if (Velocity.SizeSquared() < MinSprintSpeed * MinSprintSpeed)
+    if (Velocity.SizeSquared2D() < MinSprintSpeed * MinSprintSpeed)
         return false;
 
-    const auto ViewDir = GetOwner()->GetActorForwardVector();
-    const auto VelDir = Velocity.GetUnsafeNormal();
+    const FVector2D ViewDir{GetOwner()->GetActorForwardVector()};
+    const FVector2D VelDir{Velocity.GetUnsafeNormal2D()};
     if ((ViewDir | VelDir) < MaxSprintAngleCos)
         return false;
 
