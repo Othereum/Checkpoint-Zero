@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Animation/AnimInstance.h"
+#include "CP0.h"
 #include "WeaponAnimInst.generated.h"
 
 /**
@@ -18,6 +19,9 @@ class CP0_API UWeaponAnimInst : public UAnimInstance
 
     UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true, UIMin = 0))
     float MoveSpeed;
+
+    UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+    EPosture Posture = EPosture::Stand;
 
     UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     bool bIsSprinting = false;
