@@ -55,5 +55,10 @@ struct CP0_API FInputAction_Aim
 struct CP0_API FInputAction_Reload
 {
     static void Enable(ACP0Character* Character);
-    static void Disable(ACP0Character* Character) {}
 };
+
+struct CP0_API FInputAction_SwitchFiremode
+{
+    static void Enable(ACP0Character* Character);
+};
+

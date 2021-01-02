@@ -50,6 +50,24 @@ void AWeapon::Reload()
     }
 }
 
+void AWeapon::SwitchFiremode()
+{
+    if (!FireModes || State != EWeaponState::Idle)
+        return;
+
+    auto NewFM = static_cast<uint8>(FireMode);
+    do
+    {
+        NewFM = (NewFM + 1) % 3;
+    } while (!(FireModes & (1 << NewFM)));
+
+    const auto OldFM = FireMode;
+    FireMode = static_cast<EWeaponFireMode>(NewFM);
+
+    if (OldFM != FireMode)
+        OnFiremodeSwitched();
+}
+
 bool AWeapon::CanFire() const
 {
     const auto Char = GetCharOwner();

@@ -105,3 +105,9 @@ void FInputAction_Reload::Enable(ACP0Character* Character)
     if (const auto Weapon = Character->GetWeaponComp()->GetWeapon())
         Weapon->Reload();
 }
+
+void FInputAction_SwitchFiremode::Enable(ACP0Character* Character)
+{
+    if (const auto Weapon = Character->GetWeaponComp()->GetWeapon())
+        Weapon->SwitchFiremode();
+}

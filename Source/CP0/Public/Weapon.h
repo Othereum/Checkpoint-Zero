@@ -43,6 +43,7 @@ class CP0_API AWeapon : public AActor
 
     void SetAiming(bool bNewAiming);
     void Reload();
+    void SwitchFiremode();
 
     bool CanFire() const;
     bool IsAiming() const { return bAiming; }
@@ -65,6 +66,9 @@ class CP0_API AWeapon : public AActor
 
     UFUNCTION(BlueprintImplementableEvent)
     void OnReloadStart(bool bEmpty);
+
+    UFUNCTION(BlueprintImplementableEvent)
+    void OnFiremodeSwitched();
 
   private:
     void Tick_Idle(float DeltaTime);

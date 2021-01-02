@@ -36,8 +36,6 @@ float UCP0CharacterMovement::GetMaxSpeed() const
     case MOVE_NavWalking:
         switch (Posture)
         {
-        default:
-            ensureNoEntry();
         case EPosture::Stand:
             return IsSprinting() ? 500.0f : MaxWalkSpeed;
         case EPosture::Crouch:
@@ -53,15 +51,12 @@ float UCP0CharacterMovement::GetMaxAcceleration() const
 {
     switch (Posture)
     {
-    default:
-        ensureNoEntry();
-    case EPosture::Stand:
-        return MaxAcceleration;
     case EPosture::Crouch:
         return 512.0f;
     case EPosture::Prone:
         return 256.0f;
     }
+    return MaxAcceleration;
 }
 
 bool UCP0CharacterMovement::CanAttemptJump() const
@@ -159,7 +154,6 @@ float UCP0CharacterMovement::GetPostureSwitchTime(EPosture Prev, EPosture New) c
         }
         break;
     }
-    ensureNoEntry();
     return 0.0f;
 }
 
@@ -167,15 +161,12 @@ float UCP0CharacterMovement::GetDefaultHalfHeight(EPosture P) const
 {
     switch (P)
     {
-    default:
-        ensureNoEntry();
-    case EPosture::Stand:
-        return GetCharacterOwner()->GetDefaultHalfHeight();
     case EPosture::Crouch:
         return CrouchedHalfHeight;
     case EPosture::Prone:
         return 34.0f;
     }
+    return GetCharacterOwner()->GetDefaultHalfHeight();
 }
 
 bool UCP0CharacterMovement::CanWalkSlow() const
@@ -496,15 +487,12 @@ void UCP0CharacterMovement::UpdateRotationRate()
     RotationRate.Yaw = [this]() {
         switch (Posture)
         {
-        default:
-            ensureNoEntry();
-        case EPosture::Stand:
-            return GetDefaultSelf()->RotationRate.Yaw;
         case EPosture::Crouch:
             return 90.0f;
         case EPosture::Prone:
             return 45.0f;
         }
+        return GetDefaultSelf()->RotationRate.Yaw;
     }();
 
     constexpr auto MaxSpeed = 10.0f;
