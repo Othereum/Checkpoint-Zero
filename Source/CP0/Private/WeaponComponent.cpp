@@ -41,7 +41,7 @@ void UWeaponComponent::UpdateTransform(float DeltaTime)
 
     AimRotSpeed = FMath::RInterpTo(AimRotSpeed, Diff, DeltaTime, 10.0f);
     PrevAimRot = AimRot;
-    LocalOffset.SetRotation(FMath::QInterpTo(LocalOffset.GetRotation(), AimRotSpeed.Quaternion(), DeltaTime, 10.0f));
+    LocalOffset.SetRotation(FMath::QInterpTo(LocalOffset.GetRotation(), AimRotSpeed.Quaternion().Inverse(), DeltaTime, 10.0f));
 
     auto NewTF = GetDefaultSelf()->GetRelativeTransform();
     if (Weapon)
@@ -73,29 +73,35 @@ void UWeaponComponent::SetWeapon(AWeapon* NewWeapon)
 void FInputAction_Fire::Enable(ACP0Character* Character)
 {
     if (const auto Weapon = Character->GetWeaponComp()->GetWeapon())
-        Weapon->TrySetFiring(true);
+        Weapon->StartFiring();
 }
 
 void FInputAction_Fire::Disable(ACP0Character* Character)
 {
     if (const auto Weapon = Character->GetWeaponComp()->GetWeapon())
-        Weapon->TrySetFiring(false);
+        Weapon->StopFiring();
 }
 
 void FInputAction_Aim::Enable(ACP0Character* Character)
 {
     if (const auto Weapon = Character->GetWeaponComp()->GetWeapon())
-        Weapon->TrySetAiming(true);
+        Weapon->SetAiming(true);
 }
 
 void FInputAction_Aim::Disable(ACP0Character* Character)
 {
     if (const auto Weapon = Character->GetWeaponComp()->GetWeapon())
-        Weapon->TrySetAiming(false);
+        Weapon->SetAiming(false);
 }
 
 void FInputAction_Aim::Toggle(ACP0Character* Character)
 {
     if (const auto Weapon = Character->GetWeaponComp()->GetWeapon())
-        Weapon->TrySetAiming(!Weapon->IsAiming());
+        Weapon->SetAiming(!Weapon->IsAiming());
+}
+
+void FInputAction_Reload::Enable(ACP0Character* Character)
+{
+    if (const auto Weapon = Character->GetWeaponComp()->GetWeapon())
+        Weapon->Reload();
 }

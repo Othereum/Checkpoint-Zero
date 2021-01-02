@@ -76,6 +76,7 @@ struct FInputAction
 static const TMap<FName, FInputAction> InputActionMap{
     MAKE_INPUT_ACTION(Sprint, true),    MAKE_INPUT_ACTION(Crouch, true), MAKE_INPUT_ACTION(Prone, true),
     MAKE_INPUT_ACTION(WalkSlow, false), MAKE_INPUT_ACTION(Fire, true),   MAKE_INPUT_ACTION(Aim, true),
+    MAKE_INPUT_ACTION(Reload, true),
 };
 
 #undef MAKE_INPUT_ACTION
@@ -352,4 +353,3 @@ void ACP0Character::BindInputAction(UInputComponent* Input, FName Name, bool bHa
             Name, IE_Released, this, &ACP0Character::DispatchInputAction, Name, EInputAction::Disable);
     }
 }
-

@@ -12,7 +12,8 @@ class UWeaponComponent;
 UENUM(BlueprintType)
 enum class EWeaponState : uint8
 {
-    Ready,
+    Idle,
+    Firing,
     Reloading,
     Deploying,
     Holstering
@@ -37,12 +38,16 @@ class CP0_API AWeapon : public AActor
     UWeaponComponent* GetWeaponComp() const;
     TSubclassOf<UWeaponAnimInst> GetArmsAnimClass() const { return ArmsAnimClass; }
 
-    bool TrySetFiring(bool bNewFiring);
-    bool IsFiring() const { return bFiring; }
+    void StartFiring();
+    void StopFiring();
+
+    void SetAiming(bool bNewAiming);
+    void Reload();
+
     bool CanFire() const;
-    bool TrySetAiming(bool bNewAiming);
     bool IsAiming() const { return bAiming; }
     EWeaponState GetState() const { return State; }
+    float GetFireDelay() const { return 60.0f / RPM; }
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FTransform ArmsOffset;
@@ -58,7 +63,16 @@ class CP0_API AWeapon : public AActor
     UFUNCTION(BlueprintImplementableEvent)
     void OnDryFire();
 
+    UFUNCTION(BlueprintImplementableEvent)
+    void OnReloadStart(bool bEmpty);
+
   private:
+    void Tick_Idle(float DeltaTime);
+    void Tick_Firing(float DeltaTime);
+    void Tick_Reloading(float DeltaTime);
+    void Tick_Deploying(float DeltaTime);
+    void Tick_Holstering(float DeltaTime);
+
     void Fire();
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
@@ -70,6 +84,14 @@ class CP0_API AWeapon : public AActor
     UPROPERTY(EditAnywhere, meta = (UIMin = 1, ClampMin = 1))
     float RPM = 650.0f;
     float FireLag;
+
+    UPROPERTY(EditAnywhere)
+    float ReloadTime_Tactical = 2.0f;
+
+    UPROPERTY(EditAnywhere)
+    float ReloadTime_Empty = 3.0f;
+
+    float CurrentReloadTime;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     uint8 ClipSize = 30;
@@ -89,9 +111,6 @@ class CP0_API AWeapon : public AActor
 
     UPROPERTY(Replicated, Transient, VisibleInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     EWeaponState State;
-
-    UPROPERTY(Replicated, Transient, VisibleInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-    bool bFiring;
 
     UPROPERTY(Replicated, Transient, VisibleInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     bool bAiming;

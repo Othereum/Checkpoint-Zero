@@ -23,81 +23,77 @@ UWeaponComponent* AWeapon::GetWeaponComp() const
     return Char ? Char->GetWeaponComp() : nullptr;
 }
 
-bool AWeapon::TrySetFiring(bool bNewFiring)
+void AWeapon::StartFiring()
 {
-    if (bFiring == bNewFiring)
-        return true;
+    if (State == EWeaponState::Idle && CanFire())
+        State = EWeaponState::Firing;
+}
 
-    if (bNewFiring && !CanFire())
-        return false;
+void AWeapon::StopFiring()
+{
+    if (State == EWeaponState::Firing)
+        State = EWeaponState::Idle;
+}
 
-    bFiring = bNewFiring;
-    return true;
+void AWeapon::SetAiming(bool bNewAiming)
+{
+    bAiming = bNewAiming;
+}
+
+void AWeapon::Reload()
+{
+    if (State == EWeaponState::Idle)
+    {
+        State = EWeaponState::Reloading;
+        CurrentReloadTime = 0.0f;
+        OnReloadStart(Clip <= 0);
+    }
 }
 
 bool AWeapon::CanFire() const
 {
-    if (State != EWeaponState::Ready)
-        return false;
-
     const auto Char = GetCharOwner();
     if (!Char)
         return false;
 
-    const auto WepComp = Char->GetWeaponComp();
-    if (WepComp->GetWeapon() != this)
+    if (Char->GetWeaponComp()->GetWeapon() != this)
         return false;
 
-    const auto Movement = Char->GetCP0Movement();
-    if (Movement->IsSprinting())
+    if (Char->GetCP0Movement()->IsSprinting())
         return false;
 
-    return true;
-}
-
-bool AWeapon::TrySetAiming(bool bNewAiming)
-{
-    bAiming = bNewAiming;
     return true;
 }
 
 void AWeapon::BeginPlay()
 {
     Super::BeginPlay();
-    FireLag = 60.0f / RPM;
+    FireLag = GetFireDelay();
 }
 
 void AWeapon::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    const auto FireDelay = 60.0f / RPM;
-    FireLag += DeltaTime;
-
-    if (bFiring)
+    switch (State)
     {
-        if (CanFire())
-        {
-            while (FireLag >= FireDelay)
-            {
-                FireLag -= FireDelay;
-                Fire();
-
-                if (FireMode == EWeaponFireMode::SemiAuto || Clip <= 0)
-                {
-                    bFiring = false;
-                    break;
-                }
-            }
-        }
-        else
-        {
-            bFiring = false;
-        }
-    }
-    else
-    {
-        FireLag = FMath::Min(FireLag, FireDelay);
+    case EWeaponState::Idle:
+        Tick_Idle(DeltaTime);
+        break;
+    case EWeaponState::Firing:
+        Tick_Firing(DeltaTime);
+        break;
+    case EWeaponState::Reloading:
+        Tick_Reloading(DeltaTime);
+        break;
+    case EWeaponState::Deploying:
+        Tick_Deploying(DeltaTime);
+        break;
+    case EWeaponState::Holstering:
+        Tick_Holstering(DeltaTime);
+        break;
+    default:
+        break;
     }
 }
 
@@ -107,6 +103,57 @@ void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
     DOREPLIFETIME(AWeapon, Clip);
     DOREPLIFETIME(AWeapon, FireMode);
     DOREPLIFETIME(AWeapon, State);
+    DOREPLIFETIME(AWeapon, bAiming);
+}
+
+void AWeapon::Tick_Idle(float DeltaTime)
+{
+    FireLag = FMath::Min(FireLag + DeltaTime, GetFireDelay());
+}
+
+void AWeapon::Tick_Firing(float DeltaTime)
+{
+    if (!CanFire())
+    {
+        State = EWeaponState::Idle;
+        return;
+    }
+
+    FireLag += DeltaTime;
+
+    const auto FireDelay = GetFireDelay();
+    while (FireLag >= FireDelay)
+    {
+        FireLag -= FireDelay;
+        Fire();
+
+        if (FireMode == EWeaponFireMode::SemiAuto || Clip <= 0)
+        {
+            State = EWeaponState::Idle;
+            break;
+        }
+    }
+}
+
+void AWeapon::Tick_Reloading(float DeltaTime)
+{
+    CurrentReloadTime += DeltaTime;
+    const auto bTactical = Clip > 0;
+    const auto ReloadTime = bTactical ? ReloadTime_Tactical : ReloadTime_Empty;
+    if (CurrentReloadTime >= ReloadTime)
+    {
+        Clip = ClipSize + bTactical;
+        CurrentReloadTime = 0.0f;
+        State = EWeaponState::Idle;
+    }
+}
+
+void AWeapon::Tick_Deploying(float DeltaTime)
+{
+}
+
+void AWeapon::Tick_Holstering(float DeltaTime)
+{
 }
 
 void AWeapon::Fire()
