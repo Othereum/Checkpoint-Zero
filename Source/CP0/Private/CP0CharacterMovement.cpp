@@ -5,6 +5,8 @@
 #include "CP0Character.h"
 #include "Components/CapsuleComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "Weapon.h"
+#include "WeaponComponent.h"
 
 UCP0CharacterMovement::UCP0CharacterMovement()
 {
@@ -37,7 +39,7 @@ float UCP0CharacterMovement::GetMaxSpeed() const
         switch (Posture)
         {
         case EPosture::Stand:
-            return IsSprinting() ? 500.0f : MaxWalkSpeed;
+            return bSprinting ? 500.0f : MaxWalkSpeed;
         case EPosture::Crouch:
             return MaxWalkSpeedCrouched;
         case EPosture::Prone:
@@ -64,6 +66,11 @@ bool UCP0CharacterMovement::CanAttemptJump() const
     return !IsPostureSwitching() && Super::CanAttemptJump();
 }
 
+bool UCP0CharacterMovement::IsActuallySprinting() const
+{
+    return bSprinting && IsMovingOnGround() && Velocity.SizeSquared2D() >= MaxWalkSpeed * MaxWalkSpeed;
+}
+
 bool UCP0CharacterMovement::CanSprint(bool bIgnorePosture) const
 {
     constexpr auto MinSprintSpeed = 45.0f;
@@ -75,10 +82,14 @@ bool UCP0CharacterMovement::CanSprint(bool bIgnorePosture) const
     if (Velocity.SizeSquared2D() < MinSprintSpeed * MinSprintSpeed)
         return false;
 
-    const FVector2D ViewDir{GetOwner()->GetActorForwardVector()};
+    const FVector2D ViewDir{UpdatedComponent->GetForwardVector()};
     const FVector2D VelDir{Velocity.GetUnsafeNormal2D()};
     if ((ViewDir | VelDir) < MaxSprintAngleCos)
         return false;
+
+    if (const auto Weapon = GetCP0Owner()->GetWeaponComp()->GetWeapon())
+        if (Weapon->GetState() == EWeaponState::Reloading)
+            return false;
 
     return true;
 }
@@ -97,7 +108,7 @@ bool UCP0CharacterMovement::TryStartSprint()
             return false;
     }
 
-    bIsSprinting = true;
+    bSprinting = true;
     StopWalkingSlow();
     return true;
 }
@@ -171,7 +182,7 @@ float UCP0CharacterMovement::GetDefaultHalfHeight(EPosture P) const
 
 bool UCP0CharacterMovement::CanWalkSlow() const
 {
-    return !IsSprinting();
+    return !bSprinting;
 }
 
 bool UCP0CharacterMovement::TryStartWalkingSlow()
@@ -179,7 +190,7 @@ bool UCP0CharacterMovement::TryStartWalkingSlow()
     if (!CanWalkSlow())
         return false;
 
-    bIsWalkingSlow = true;
+    bWalkingSlow = true;
     return true;
 }
 
@@ -245,7 +256,7 @@ void UCP0CharacterMovement::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
     DOREPLIFETIME(UCP0CharacterMovement, Posture);
-    DOREPLIFETIME(UCP0CharacterMovement, bIsSprinting);
+    DOREPLIFETIME(UCP0CharacterMovement, bSprinting);
 }
 
 void UCP0CharacterMovement::OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode)
@@ -293,11 +304,17 @@ const UCP0CharacterMovement* UCP0CharacterMovement::GetDefaultSelf() const
 
 void UCP0CharacterMovement::ProcessSprint()
 {
+    if (!bSprinting)
+        return;
+
+    if (IsActuallySprinting())
+        LastActualSprintTime = GetWorld()->GetTimeSeconds();
+
     switch (GetOwnerRole())
     {
     case ROLE_Authority:
     case ROLE_AutonomousProxy:
-        if (IsSprinting() && !CanSprint())
+        if (!CanSprint())
             StopSprint();
     }
 }
@@ -556,7 +573,7 @@ void FInputAction_Sprint::Disable(ACP0Character* Character)
 void FInputAction_Sprint::Toggle(ACP0Character* Character)
 {
     const auto Movement = Character->GetCP0Movement();
-    Movement->IsSprinting() ? Movement->StopSprint() : Movement->TryStartSprint();
+    Movement->IsInSprintMode() ? Movement->StopSprint() : Movement->TryStartSprint();
 }
 
 void FInputAction_Crouch::Enable(ACP0Character* Character)

@@ -40,10 +40,12 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     float GetMaxAcceleration() const override;
     bool CanAttemptJump() const override;
 
-    bool IsSprinting() const { return bIsSprinting; }
+    bool IsInSprintMode() const { return bSprinting; }
+    bool IsActuallySprinting() const;
     bool CanSprint(bool bIgnorePosture = false) const;
     bool TryStartSprint();
-    void StopSprint() { bIsSprinting = false; }
+    void StopSprint() { bSprinting = false; }
+    float GetLastActualSprintTime() const { return LastActualSprintTime; }
 
     bool TrySetPosture(EPosture New, ESetPostureCheckLevel CheckLevel = SPCL_CheckAll);
     EPosture GetPosture() const { return Posture; }
@@ -52,10 +54,10 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     float GetPostureSwitchTime(EPosture Prev, EPosture New) const;
     float GetDefaultHalfHeight(EPosture P) const;
 
-    bool IsWalkingSlow() const { return bIsWalkingSlow; }
+    bool IsWalkingSlow() const { return bWalkingSlow; }
     bool CanWalkSlow() const;
     bool TryStartWalkingSlow();
-    void StopWalkingSlow() { bIsWalkingSlow = false; }
+    void StopWalkingSlow() { bWalkingSlow = false; }
 
     float CalcFloorPitch() const;
     float GetMeshPitchOffset() const { return MeshPitchOffset; }
@@ -92,6 +94,8 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     FVector ForceInput{0.0f};
     float NextPostureSwitch = 0.0f;
     float MeshPitchOffset = 0.0f;
+    
+    float LastActualSprintTime;
 
     UPROPERTY(EditAnywhere)
     TEnumAsByte<ECollisionChannel> PushTraceChannel;
@@ -101,8 +105,8 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     EPosture PrevPosture = EPosture::Stand;
 
     UPROPERTY(Replicated, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-    bool bIsSprinting = false;
-    bool bIsWalkingSlow = false;
+    bool bSprinting = false;
+    bool bWalkingSlow = false;
 };
 
 struct CP0_API FInputAction_Sprint

@@ -42,17 +42,17 @@ void AWeapon::SetAiming(bool bNewAiming)
 
 void AWeapon::Reload()
 {
-    if (State == EWeaponState::Idle)
-    {
-        State = EWeaponState::Reloading;
-        CurrentReloadTime = 0.0f;
-        OnReloadStart(Clip <= 0);
-    }
+    if (State != EWeaponState::Idle || !CanDoCommonAction())
+        return;
+
+    State = EWeaponState::Reloading;
+    CurrentReloadTime = 0.0f;
+    OnReloadStart(Clip <= 0);
 }
 
 void AWeapon::SwitchFiremode()
 {
-    if (!FireModes || State != EWeaponState::Idle)
+    if (!FireModes || State != EWeaponState::Idle || !CanDoCommonAction())
         return;
 
     auto NewFM = static_cast<uint8>(FireMode);
@@ -71,16 +71,7 @@ void AWeapon::SwitchFiremode()
 bool AWeapon::CanFire() const
 {
     const auto Char = GetCharOwner();
-    if (!Char)
-        return false;
-
-    if (Char->GetWeaponComp()->GetWeapon() != this)
-        return false;
-
-    if (Char->GetCP0Movement()->IsSprinting())
-        return false;
-
-    return true;
+    return Char && Char->GetWeaponComp()->GetWeapon() == this && CanDoCommonAction();
 }
 
 void AWeapon::BeginPlay()
@@ -155,9 +146,9 @@ void AWeapon::Tick_Firing(float DeltaTime)
 
 void AWeapon::Tick_Reloading(float DeltaTime)
 {
-    CurrentReloadTime += DeltaTime;
     const auto bTactical = Clip > 0;
     const auto ReloadTime = bTactical ? ReloadTime_Tactical : ReloadTime_Empty;
+    CurrentReloadTime += DeltaTime;
     if (CurrentReloadTime >= ReloadTime)
     {
         Clip = ClipSize + bTactical;
@@ -186,3 +177,10 @@ void AWeapon::Fire()
         OnDryFire();
     }
 }
+
+bool AWeapon::CanDoCommonAction() const
+{
+    const auto Char = GetCharOwner();
+    return Char && GetWorld()->GetTimeSeconds() - Char->GetCP0Movement()->GetLastActualSprintTime() >= 0.15f;
+}
+

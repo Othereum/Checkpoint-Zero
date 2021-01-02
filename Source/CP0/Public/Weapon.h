@@ -3,7 +3,6 @@
 #pragma once
 
 #include "GameFramework/Actor.h"
-#include "WeaponAnimInst.h"
 #include "Weapon.generated.h"
 
 class ACP0Character;
@@ -36,7 +35,7 @@ class CP0_API AWeapon : public AActor
     AWeapon();
     ACP0Character* GetCharOwner() const;
     UWeaponComponent* GetWeaponComp() const;
-    TSubclassOf<UWeaponAnimInst> GetArmsAnimClass() const { return ArmsAnimClass; }
+    TSubclassOf<UAnimInstance> GetArmsAnimClass() const { return ArmsAnimClass; }
 
     void StartFiring();
     void StopFiring();
@@ -79,11 +78,13 @@ class CP0_API AWeapon : public AActor
 
     void Fire();
 
+    bool CanDoCommonAction() const;
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     USkeletalMeshComponent* Mesh;
 
     UPROPERTY(EditDefaultsOnly)
-    TSubclassOf<UWeaponAnimInst> ArmsAnimClass;
+    TSubclassOf<UAnimInstance> ArmsAnimClass;
 
     UPROPERTY(EditAnywhere, meta = (UIMin = 1, ClampMin = 1))
     float RPM = 650.0f;

@@ -23,7 +23,7 @@ void UCP0AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
     const auto* const Movement = Character->GetCP0Movement();
     Posture = Movement->GetPosture();
     bIsOnGround = Movement->IsMovingOnGround();
-    bIsSprinting = Movement->IsSprinting() && MoveSpeed > Movement->MaxWalkSpeed;
+    bIsSprinting = Movement->IsActuallySprinting();
     bShouldPlayPostureAnim = MoveSpeed < 50.0f || Movement->IsProneSwitching();
     MeshRotOffset.Roll = FMath::FInterpTo(MeshRotOffset.Roll, Movement->GetMeshPitchOffset(), DeltaSeconds,
                                           Movement->IsProneSwitching() ? 1.0f : 10.0f);
