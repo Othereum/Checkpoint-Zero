@@ -71,18 +71,18 @@ class CP0_API AWeapon : public AActor
     float RPM = 650.0f;
     float FireLag;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly,
-              meta = (AllowPrivateAccess = true, Bitmask, BitmaskEnum = EWeaponFireMode))
-    int32 FireModes;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-    int32 BurstCount = 3;
-
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     uint8 ClipSize = 30;
 
     UPROPERTY(Replicated, Transient, EditInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     uint8 Clip;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly,
+              meta = (AllowPrivateAccess = true, Bitmask, BitmaskEnum = EWeaponFireMode))
+    uint8 FireModes;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+    uint8 BurstCount = 3;
 
     UPROPERTY(Replicated, Transient, EditInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     EWeaponFireMode FireMode;
