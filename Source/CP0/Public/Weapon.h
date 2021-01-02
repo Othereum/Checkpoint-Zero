@@ -3,6 +3,7 @@
 #pragma once
 
 #include "GameFramework/Actor.h"
+#include "CP0.h"
 #include "Weapon.generated.h"
 
 class ACP0Character;
@@ -16,14 +17,6 @@ enum class EWeaponState : uint8
     Reloading,
     Deploying,
     Holstering
-};
-
-UENUM(BlueprintType, meta = (Bitflags))
-enum class EWeaponFireMode : uint8
-{
-    SemiAuto,
-    Burst,
-    FullAuto
 };
 
 UCLASS()
@@ -47,6 +40,7 @@ class CP0_API AWeapon : public AActor
     bool CanFire() const;
     bool IsAiming() const { return bAiming; }
     EWeaponState GetState() const { return State; }
+    EWeaponFireMode GetFireMode() const { return FireMode; }
     float GetFireDelay() const { return 60.0f / RPM; }
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
