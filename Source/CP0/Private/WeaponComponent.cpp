@@ -32,6 +32,14 @@ void UWeaponComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
     DOREPLIFETIME(UWeaponComponent, Weapon);
 }
 
+void UWeaponComponent::OnRep_Weapon()
+{
+    if (Weapon)
+    {
+        SetAnimInstanceClass(Weapon->GetArmsAnimClass());
+    }
+}
+
 void UWeaponComponent::UpdateTransform(float DeltaTime)
 {
     const auto Owner = GetCharOwner();

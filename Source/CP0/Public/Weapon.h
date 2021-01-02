@@ -75,9 +75,8 @@ class CP0_API AWeapon : public AActor
     void Tick_Reloading(float DeltaTime);
     void Tick_Deploying(float DeltaTime);
     void Tick_Holstering(float DeltaTime);
-
+    
     bool Fire();
-
     bool CanDoCommonAction() const;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
@@ -115,9 +114,9 @@ class CP0_API AWeapon : public AActor
     UPROPERTY(Replicated, Transient, EditInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     EWeaponFireMode FireMode;
 
-    UPROPERTY(Replicated, Transient, VisibleInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+    UPROPERTY(Replicated, Transient, EditInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     EWeaponState State;
 
-    UPROPERTY(Replicated, Transient, VisibleInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+    UPROPERTY(Replicated, Transient, EditInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     bool bAiming;
 };

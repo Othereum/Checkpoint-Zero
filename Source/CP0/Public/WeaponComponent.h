@@ -31,7 +31,10 @@ class CP0_API UWeaponComponent : public USkeletalMeshComponent
     void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
   private:
-    UPROPERTY(Replicated, Transient, VisibleInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+    UFUNCTION()
+    void OnRep_Weapon();
+
+    UPROPERTY(ReplicatedUsing = OnRep_Weapon, Transient, VisibleInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     AWeapon* Weapon;
 
     FTransform LocalOffset;

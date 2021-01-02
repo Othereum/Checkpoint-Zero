@@ -115,8 +115,8 @@ void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(AWeapon, Clip);
     DOREPLIFETIME(AWeapon, FireMode);
-    DOREPLIFETIME(AWeapon, State);
     DOREPLIFETIME(AWeapon, bAiming);
+    DOREPLIFETIME_CONDITION(AWeapon, State, COND_SkipOwner);
 }
 
 void AWeapon::Tick_Idle(float DeltaTime)
