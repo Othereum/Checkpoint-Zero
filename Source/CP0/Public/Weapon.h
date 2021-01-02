@@ -38,7 +38,7 @@ class CP0_API AWeapon : public AActor
     TSubclassOf<UAnimInstance> GetArmsAnimClass() const { return ArmsAnimClass; }
 
     void StartFiring();
-    void StopFiring();
+    void StopFiring(bool bForce = false);
 
     void SetAiming(bool bNewAiming);
     void Reload();
@@ -76,7 +76,7 @@ class CP0_API AWeapon : public AActor
     void Tick_Deploying(float DeltaTime);
     void Tick_Holstering(float DeltaTime);
 
-    void Fire();
+    bool Fire();
 
     bool CanDoCommonAction() const;
 
@@ -110,6 +110,7 @@ class CP0_API AWeapon : public AActor
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     uint8 BurstCount = 3;
+    uint8 CurBurstCount;
 
     UPROPERTY(Replicated, Transient, EditInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     EWeaponFireMode FireMode;

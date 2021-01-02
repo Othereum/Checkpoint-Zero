@@ -26,13 +26,18 @@ UWeaponComponent* AWeapon::GetWeaponComp() const
 void AWeapon::StartFiring()
 {
     if (State == EWeaponState::Idle && CanFire())
+    {
         State = EWeaponState::Firing;
+    }
 }
 
-void AWeapon::StopFiring()
+void AWeapon::StopFiring(bool bForce)
 {
-    if (State == EWeaponState::Firing)
+    if (State == EWeaponState::Firing && (bForce || FireMode != EWeaponFireMode::Burst))
+    {
         State = EWeaponState::Idle;
+        CurBurstCount = 0;
+    }
 }
 
 void AWeapon::SetAiming(bool bNewAiming)
@@ -70,8 +75,7 @@ void AWeapon::SwitchFiremode()
 
 bool AWeapon::CanFire() const
 {
-    const auto Char = GetCharOwner();
-    return Char && Char->GetWeaponComp()->GetWeapon() == this && CanDoCommonAction();
+    return CanDoCommonAction();
 }
 
 void AWeapon::BeginPlay()
@@ -124,7 +128,7 @@ void AWeapon::Tick_Firing(float DeltaTime)
 {
     if (!CanFire())
     {
-        State = EWeaponState::Idle;
+        StopFiring(true);
         return;
     }
 
@@ -134,11 +138,9 @@ void AWeapon::Tick_Firing(float DeltaTime)
     while (FireLag >= FireDelay)
     {
         FireLag -= FireDelay;
-        Fire();
-
-        if (FireMode == EWeaponFireMode::SemiAuto || Clip <= 0)
+        if (!Fire())
         {
-            State = EWeaponState::Idle;
+            StopFiring(true);
             break;
         }
     }
@@ -165,22 +167,40 @@ void AWeapon::Tick_Holstering(float DeltaTime)
 {
 }
 
-void AWeapon::Fire()
+bool AWeapon::Fire()
 {
-    if (Clip > 0)
-    {
-        --Clip;
-        OnFire();
-    }
-    else
+    if (Clip == 0)
     {
         OnDryFire();
+        return false;
     }
+
+    --Clip;
+
+    const auto bBurst = FireMode == EWeaponFireMode::Burst;
+    if (bBurst)
+        ++CurBurstCount;
+
+    OnFire();
+
+    if (Clip == 0)
+        return false;
+
+    switch (FireMode)
+    {
+    case EWeaponFireMode::SemiAuto:
+        return false;
+    case EWeaponFireMode::Burst:
+        return CurBurstCount < BurstCount;
+    }
+
+    return true;
 }
 
 bool AWeapon::CanDoCommonAction() const
 {
     const auto Char = GetCharOwner();
-    return Char && GetWorld()->GetTimeSeconds() - Char->GetCP0Movement()->GetLastActualSprintTime() >= 0.15f;
+    return Char && Char->GetWeaponComp()->GetWeapon() == this &&
+           GetWorld()->GetTimeSeconds() - Char->GetCP0Movement()->GetLastActualSprintTime() >= 0.15f;
 }
 
