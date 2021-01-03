@@ -83,10 +83,13 @@ bool UCP0CharacterMovement::CanSprint(bool bIgnorePosture) const
     if (Velocity.SizeSquared2D() < MinSprintSpeed * MinSprintSpeed)
         return false;
 
-    const FVector2D ViewDir{UpdatedComponent->GetForwardVector()};
-    const FVector2D VelDir{Velocity.GetUnsafeNormal2D()};
-    if ((ViewDir | VelDir) < MaxSprintAngleCos)
-        return false;
+    if (IsMovingOnGround())
+    {
+        const FVector2D ViewDir{UpdatedComponent->GetForwardVector()};
+        const FVector2D VelDir{Velocity.GetUnsafeNormal2D()};
+        if ((ViewDir | VelDir) < MaxSprintAngleCos)
+            return false;
+    }
 
     if (const auto Weapon = GetCP0Owner()->GetWeaponComp()->GetWeapon())
         if (Weapon->GetState() == EWeaponState::Reloading)
