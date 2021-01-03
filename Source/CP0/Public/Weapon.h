@@ -19,6 +19,24 @@ enum class EWeaponState : uint8
     Holstering
 };
 
+USTRUCT()
+struct FWeaponCorrectionData
+{
+    GENERATED_BODY()
+
+    UPROPERTY()
+    uint8 Clip;
+
+    UPROPERTY()
+    EWeaponFireMode FireMode;
+
+    UPROPERTY()
+    EWeaponState State;
+
+    UPROPERTY()
+    bool bAiming;
+};
+
 UCLASS()
 class CP0_API AWeapon : public AActor
 {
@@ -31,7 +49,7 @@ class CP0_API AWeapon : public AActor
     TSubclassOf<UAnimInstance> GetArmsAnimClass() const { return ArmsAnimClass; }
 
     void StartFiring();
-    void StopFiring(bool bForce = false);
+    void StopFiring();
 
     void SetAiming(bool bNewAiming);
     void Reload();
@@ -63,15 +81,39 @@ class CP0_API AWeapon : public AActor
     UFUNCTION(BlueprintImplementableEvent)
     void OnFiremodeSwitched();
 
+    UFUNCTION(BlueprintImplementableEvent)
+    void OnReloadCancelled();
+
   private:
     void Tick_Idle(float DeltaTime);
     void Tick_Firing(float DeltaTime);
     void Tick_Reloading(float DeltaTime);
     void Tick_Deploying(float DeltaTime);
     void Tick_Holstering(float DeltaTime);
+
+    void Enter_Idle();
+    void Enter_Firing();
+    void Enter_Reloading();
+    void Enter_Deploying();
+    void Enter_Holstering();
     
+    void Exit_Idle();
+    void Exit_Firing();
+    void Exit_Reloading();
+    void Exit_Deploying();
+    void Exit_Holstering();
+
     bool Fire();
     bool CanDoCommonAction() const;
+
+    void SetClip(uint8 NewClip);
+    void SetState(EWeaponState NewState);
+    void SetFireMode(EWeaponFireMode NewFM);
+
+    void CorrectClientState();
+
+    UFUNCTION(Client, Unreliable)
+    void Client_CorrectState(FWeaponCorrectionData Data);
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     USkeletalMeshComponent* Mesh;
@@ -90,6 +132,12 @@ class CP0_API AWeapon : public AActor
     float ReloadTime_Empty = 3.0f;
 
     float CurrentReloadTime;
+
+    float Clip_LastModified;
+    float FireMode_LastModified;
+    float State_LastModified;
+    float bAiming_LastModified;
+    float NextCorrection;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     uint8 ClipSize = 30;

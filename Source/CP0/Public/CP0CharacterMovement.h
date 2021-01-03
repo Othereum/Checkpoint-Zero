@@ -8,20 +8,27 @@
 
 class ACP0Character;
 
-UENUM(BlueprintType)
-enum class ESprintSpeed : uint8
-{
-    Absolute,
-    Relative,
-    Multiply
-};
-
 enum ESetPostureCheckLevel
 {
     SPCL_Correction,
     SPCL_ClientSimulation,
     SPCL_IgnoreDelay,
     SPCL_CheckAll,
+};
+
+USTRUCT()
+struct FCP0MovementCorrectionData
+{
+    GENERATED_BODY()
+
+    UPROPERTY()
+    EPosture Posture;
+
+    UPROPERTY()
+    EPosture PrevPosture;
+
+    UPROPERTY()
+    uint8 bSprinting : 1;
 };
 
 /**
@@ -44,7 +51,7 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     bool IsActuallySprinting() const;
     bool CanSprint(bool bIgnorePosture = false) const;
     bool TryStartSprint();
-    void StopSprint() { bSprinting = false; }
+    void StopSprint();
     float GetLastActualSprintTime() const { return LastActualSprintTime; }
 
     bool TrySetPosture(EPosture New, ESetPostureCheckLevel CheckLevel = SPCL_CheckAll);
@@ -81,21 +88,27 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     void ProcessPronePitch(float DeltaTime);
     void UpdateRotationRate();
     void UpdateViewPitchLimit(float DeltaTime);
+    void CorrectClientState();
 
-    bool TrySetPosture_Impl(EPosture New, ESetPostureCheckLevel CheckLevel);
     void ShrinkPerchRadius();
 
-    UFUNCTION(Client, Reliable)
-    void ClientCorrectPosture(EPosture Prev, EPosture Cur);
+    UFUNCTION(Client, Unreliable)
+    void Client_CorrectState(FCP0MovementCorrectionData Data);
 
     UFUNCTION()
     void OnRep_Posture(EPosture Prev);
 
-    FVector ForceInput{0.0f};
-    float NextPostureSwitch = 0.0f;
-    float MeshPitchOffset = 0.0f;
-    
+    void SetPosture(EPosture NewPosture);
+    void SetSprinting(bool bNewValue);
+
+    FVector ForceInput;
+    float NextPostureSwitch;
+    float MeshPitchOffset;
     float LastActualSprintTime;
+
+    float Posture_LastModifiedTime;
+    float Sprinting_LastModifiedTime;
+    float NextCorrectionTime;
 
     UPROPERTY(EditAnywhere)
     TEnumAsByte<ECollisionChannel> PushTraceChannel;
@@ -105,8 +118,8 @@ class CP0_API UCP0CharacterMovement final : public UCharacterMovementComponent
     EPosture PrevPosture = EPosture::Stand;
 
     UPROPERTY(Replicated, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-    bool bSprinting = false;
-    bool bWalkingSlow = false;
+    uint8 bSprinting : 1;
+    uint8 bWalkingSlow : 1;
 };
 
 struct CP0_API FInputAction_Sprint

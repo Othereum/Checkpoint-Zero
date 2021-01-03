@@ -4,6 +4,7 @@
 #include "CP0.h"
 #include "CP0Character.h"
 #include "Components/CapsuleComponent.h"
+#include "GameFramework/PlayerState.h"
 #include "Net/UnrealNetwork.h"
 #include "Weapon.h"
 #include "WeaponComponent.h"
@@ -96,6 +97,9 @@ bool UCP0CharacterMovement::CanSprint(bool bIgnorePosture) const
 
 bool UCP0CharacterMovement::TryStartSprint()
 {
+    if (bSprinting)
+        return true;
+
     if (!CanSprint(true))
         return false;
 
@@ -108,19 +112,109 @@ bool UCP0CharacterMovement::TryStartSprint()
             return false;
     }
 
-    bSprinting = true;
+    SetSprinting(true);
     StopWalkingSlow();
     return true;
 }
 
+void UCP0CharacterMovement::StopSprint()
+{
+    SetSprinting(false);
+}
+
 bool UCP0CharacterMovement::TrySetPosture(EPosture New, ESetPostureCheckLevel CheckLevel)
 {
-    const auto bSuccess = TrySetPosture_Impl(New, CheckLevel);
-    if (!bSuccess && GetOwner()->GetRemoteRole() == ROLE_AutonomousProxy)
+    if (CheckLevel > SPCL_Correction && Posture == New)
+        return true;
+
+    if (CheckLevel > SPCL_ClientSimulation)
     {
-        ClientCorrectPosture(PrevPosture, Posture);
+        if (CheckLevel > SPCL_IgnoreDelay && IsPostureSwitching())
+            return false;
+
+        if (New != EPosture::Stand && !IsMovingOnGround())
+            return false;
     }
-    return bSuccess;
+
+    const auto Owner = GetCP0Owner();
+    const auto Capsule = Owner->GetCapsuleComponent();
+    const auto SwitchTime = GetPostureSwitchTime(Posture, New);
+    const auto NewHalfHeight = GetDefaultHalfHeight(New);
+    const auto OldHalfHeight = Capsule->GetUnscaledCapsuleHalfHeight();
+    const auto HalfHeightAdjust = NewHalfHeight - OldHalfHeight;
+    const auto NewPawnLocation = Capsule->GetComponentLocation() + FVector{0.0f, 0.0f, HalfHeightAdjust};
+
+    if (CheckLevel > SPCL_ClientSimulation && HalfHeightAdjust > 0.0f)
+    {
+        FCollisionQueryParams CapsuleParams{NAME_None, false, Owner};
+        FCollisionResponseParams ResponseParam;
+        InitCollisionParams(CapsuleParams, ResponseParam);
+
+        const auto CapsuleShape = GetPawnCapsuleCollisionShape(SHRINK_HeightCustom, -HalfHeightAdjust);
+        const auto CollisionChannel = Capsule->GetCollisionObjectType();
+        const auto bEncroached = GetWorld()->OverlapBlockingTestByChannel(
+            NewPawnLocation, FQuat::Identity, CollisionChannel, CapsuleShape, CapsuleParams, ResponseParam);
+
+        if (bEncroached)
+            return false;
+    }
+
+    const auto Default = GetDefaultSelf();
+    const auto OldWalkableFloorAngle = GetWalkableFloorAngle();
+    const auto OldPerchRadiusThreshold = PerchRadiusThreshold;
+    const auto bIsProne = New == EPosture::Prone;
+    SetWalkableFloorAngle(bIsProne ? 30.0f : Default->GetWalkableFloorAngle());
+    bCanWalkOffLedges = !bIsProne;
+    PerchRadiusThreshold = !bIsProne ? Default->PerchRadiusThreshold : Capsule->GetScaledCapsuleRadius();
+    ShrinkPerchRadius();
+
+    if (CheckLevel > SPCL_ClientSimulation)
+    {
+        Capsule->SetCapsuleHalfHeight(NewHalfHeight);
+        FFindFloorResult Result;
+        FindFloor(NewPawnLocation, Result, false);
+        Capsule->SetCapsuleHalfHeight(OldHalfHeight);
+
+        if (!Result.bWalkableFloor)
+        {
+            SetWalkableFloorAngle(OldWalkableFloorAngle);
+            bCanWalkOffLedges = bIsProne;
+            PerchRadiusThreshold = OldPerchRadiusThreshold;
+            return false;
+        }
+    }
+
+    Owner->SetEyeHeightWithBlend(Owner->GetDefaultEyeHeight(New), SwitchTime);
+    Owner->BaseTranslationOffset = {0.0f, 0.0f, -NewHalfHeight};
+    Owner->GetMesh()->SetRelativeLocation(Owner->BaseTranslationOffset);
+    Capsule->SetCapsuleHalfHeight(NewHalfHeight);
+
+    if (CheckLevel <= SPCL_ClientSimulation)
+    {
+        const auto ClientData = GetPredictionData_Client_Character();
+        ClientData->MeshTranslationOffset.Z += HalfHeightAdjust;
+        ClientData->OriginalMeshTranslationOffset = ClientData->MeshTranslationOffset;
+        bShrinkProxyCapsule = true;
+        AdjustProxyCapsuleSize();
+    }
+    else
+    {
+        Capsule->SetWorldLocation(NewPawnLocation);
+    }
+
+    SetPosture(New);
+
+    if (CheckLevel > SPCL_Correction)
+    {
+        NextPostureSwitch = CurTime() + SwitchTime;
+        Owner->OnPostureChanged(PrevPosture, Posture);
+    }
+    else
+    {
+        NextPostureSwitch = CurTime();
+    }
+
+    return true;
 }
 
 bool UCP0CharacterMovement::IsPostureSwitching() const
@@ -249,14 +343,15 @@ void UCP0CharacterMovement::TickComponent(float DeltaTime, ELevelTick TickType,
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
     ProcessForceTurn();
+    CorrectClientState();
 }
 
 void UCP0CharacterMovement::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-    DOREPLIFETIME(UCP0CharacterMovement, Posture);
-    DOREPLIFETIME(UCP0CharacterMovement, bSprinting);
+    DOREPLIFETIME_CONDITION(UCP0CharacterMovement, Posture, COND_SkipOwner);
+    DOREPLIFETIME_CONDITION(UCP0CharacterMovement, bSprinting, COND_SkipOwner);
 }
 
 void UCP0CharacterMovement::OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode)
@@ -389,100 +484,17 @@ void UCP0CharacterMovement::UpdateViewPitchLimit(float DeltaTime)
     PCM->ViewPitchMax = FMath::FInterpTo(PCM->ViewPitchMax, Limit.Y, DeltaTime, Speed);
 }
 
-bool UCP0CharacterMovement::TrySetPosture_Impl(EPosture New, ESetPostureCheckLevel CheckLevel)
+void UCP0CharacterMovement::CorrectClientState()
 {
-    if (CheckLevel > SPCL_Correction && Posture == New)
-        return true;
+    if (GetOwner()->GetRemoteRole() != ROLE_AutonomousProxy)
+        return;
 
-    if (CheckLevel > SPCL_ClientSimulation)
+    const auto Now = GetWorld()->GetRealTimeSeconds();
+    if (NextCorrectionTime <= Now)
     {
-        if (CheckLevel > SPCL_IgnoreDelay && IsPostureSwitching())
-            return false;
-
-        if (New != EPosture::Stand && !IsMovingOnGround())
-            return false;
+        Client_CorrectState({Posture, PrevPosture, bSprinting});
+        NextCorrectionTime = Now + 0.5f;
     }
-
-    const auto Owner = GetCP0Owner();
-    const auto Capsule = Owner->GetCapsuleComponent();
-    const auto SwitchTime = GetPostureSwitchTime(Posture, New);
-    const auto NewHalfHeight = GetDefaultHalfHeight(New);
-    const auto OldHalfHeight = Capsule->GetUnscaledCapsuleHalfHeight();
-    const auto HalfHeightAdjust = NewHalfHeight - OldHalfHeight;
-    const auto NewPawnLocation = Capsule->GetComponentLocation() + FVector{0.0f, 0.0f, HalfHeightAdjust};
-
-    if (CheckLevel > SPCL_ClientSimulation && HalfHeightAdjust > 0.0f)
-    {
-        FCollisionQueryParams CapsuleParams{NAME_None, false, Owner};
-        FCollisionResponseParams ResponseParam;
-        InitCollisionParams(CapsuleParams, ResponseParam);
-
-        const auto CapsuleShape = GetPawnCapsuleCollisionShape(SHRINK_HeightCustom, -HalfHeightAdjust);
-        const auto CollisionChannel = Capsule->GetCollisionObjectType();
-        const auto bEncroached = GetWorld()->OverlapBlockingTestByChannel(
-            NewPawnLocation, FQuat::Identity, CollisionChannel, CapsuleShape, CapsuleParams, ResponseParam);
-
-        if (bEncroached)
-            return false;
-    }
-
-    const auto Default = GetDefaultSelf();
-    const auto OldWalkableFloorAngle = GetWalkableFloorAngle();
-    const auto OldPerchRadiusThreshold = PerchRadiusThreshold;
-    const auto bIsProne = New == EPosture::Prone;
-    SetWalkableFloorAngle(bIsProne ? 30.0f : Default->GetWalkableFloorAngle());
-    bCanWalkOffLedges = !bIsProne;
-    PerchRadiusThreshold = !bIsProne ? Default->PerchRadiusThreshold : Capsule->GetScaledCapsuleRadius();
-    ShrinkPerchRadius();
-
-    if (CheckLevel > SPCL_ClientSimulation)
-    {
-        Capsule->SetCapsuleHalfHeight(NewHalfHeight);
-        FFindFloorResult Result;
-        FindFloor(NewPawnLocation, Result, false);
-        Capsule->SetCapsuleHalfHeight(OldHalfHeight);
-
-        if (!Result.bWalkableFloor)
-        {
-            SetWalkableFloorAngle(OldWalkableFloorAngle);
-            bCanWalkOffLedges = bIsProne;
-            PerchRadiusThreshold = OldPerchRadiusThreshold;
-            return false;
-        }
-    }
-
-    Owner->SetEyeHeightWithBlend(Owner->GetDefaultEyeHeight(New), SwitchTime);
-    Owner->BaseTranslationOffset = {0.0f, 0.0f, -NewHalfHeight};
-    Owner->GetMesh()->SetRelativeLocation(Owner->BaseTranslationOffset);
-    Capsule->SetCapsuleHalfHeight(NewHalfHeight);
-
-    if (CheckLevel <= SPCL_ClientSimulation)
-    {
-        const auto ClientData = GetPredictionData_Client_Character();
-        ClientData->MeshTranslationOffset.Z += HalfHeightAdjust;
-        ClientData->OriginalMeshTranslationOffset = ClientData->MeshTranslationOffset;
-        bShrinkProxyCapsule = true;
-        AdjustProxyCapsuleSize();
-    }
-    else
-    {
-        Capsule->SetWorldLocation(NewPawnLocation);
-    }
-
-    PrevPosture = Posture;
-    Posture = New;
-
-    if (CheckLevel > SPCL_Correction)
-    {
-        NextPostureSwitch = CurTime() + SwitchTime;
-        Owner->OnPostureChanged(PrevPosture, Posture);
-    }
-    else
-    {
-        NextPostureSwitch = CurTime();
-    }
-
-    return true;
 }
 
 void UCP0CharacterMovement::ShrinkPerchRadius()
@@ -544,12 +556,22 @@ void UCP0CharacterMovement::ProcessForceTurn()
     }
 }
 
-void UCP0CharacterMovement::ClientCorrectPosture_Implementation(EPosture Prev, EPosture Cur)
+void UCP0CharacterMovement::Client_CorrectState_Implementation(FCP0MovementCorrectionData Data)
 {
-    if (Posture != Cur)
+    const auto PingMs = PawnOwner->GetPlayerState()->GetPing() * 4.0f;
+    const auto Now = GetWorld()->GetRealTimeSeconds();
+
+    auto IsExpired = [&](float LastModified) { return (Now - LastModified) * 1000.0f >= PingMs; };
+
+    if (Posture != Data.Posture && IsExpired(Posture_LastModifiedTime))
     {
-        Posture = Prev;
-        TrySetPosture(Cur, SPCL_Correction);
+        Posture = Data.PrevPosture;
+        TrySetPosture(Data.Posture, SPCL_Correction);
+    }
+
+    if (bSprinting != Data.bSprinting && IsExpired(Sprinting_LastModifiedTime))
+    {
+        bSprinting = Data.bSprinting;
     }
 }
 
@@ -558,6 +580,19 @@ void UCP0CharacterMovement::OnRep_Posture(EPosture Prev)
     const auto New = Posture;
     Posture = Prev;
     TrySetPosture(New, SPCL_ClientSimulation);
+}
+
+void UCP0CharacterMovement::SetPosture(EPosture NewPosture)
+{
+    PrevPosture = Posture;
+    Posture = NewPosture;
+    Posture_LastModifiedTime = GetWorld()->GetRealTimeSeconds();
+}
+
+void UCP0CharacterMovement::SetSprinting(bool bNewValue)
+{
+    bSprinting = bNewValue;
+    Sprinting_LastModifiedTime = GetWorld()->GetRealTimeSeconds();
 }
 
 void FInputAction_Sprint::Enable(ACP0Character* Character)
