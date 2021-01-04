@@ -57,9 +57,8 @@ class CP0_API ACP0Character : public ACharacter
     void UpdateLegsTransform();
 
     UFUNCTION(Server, Reliable, WithValidation)
-    void ServerInputAction(FName Name, EInputAction Type);
-    void DispatchInputAction(FName Name, EInputAction Type);
-    void BindInputAction(UInputComponent* Input, FName Name);
+    void ServerInputAction(uint8 Idx, EInputAction Type);
+    void DispatchInputAction(size_t Idx, EInputAction Type);
 
     void MoveForward(float AxisValue);
     void MoveRight(float AxisValue);

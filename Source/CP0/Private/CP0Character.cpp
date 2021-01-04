@@ -78,26 +78,29 @@ static bool DispatchInputByType(ACP0Character* Character, EInputAction Type)
 
 struct FInputAction
 {
-    template <class Action>
-    static FInputAction Create(bool bSendToServer)
-    {
-        return {&DispatchInputByType<Action>, bSendToServer};
-    }
-
+    FName Name;
     bool (*Dispatcher)(ACP0Character*, EInputAction);
     bool bSendToServer;
 };
 
 #define MAKE_INPUT_ACTION(Name, bSendToServer)                                                                         \
     {                                                                                                                  \
-        TEXT(#Name), FInputAction::Create<FInputAction_##Name>(bSendToServer)                                          \
+        TEXT(#Name), &DispatchInputByType<FInputAction_##Name>, bSendToServer                                          \
     }
 
-static const TMap<FName, FInputAction> InputActionMap{
+static const FInputAction InputActions[]{
     MAKE_INPUT_ACTION(Sprint, true),    MAKE_INPUT_ACTION(Crouch, true),         MAKE_INPUT_ACTION(Prone, true),
     MAKE_INPUT_ACTION(WalkSlow, false), MAKE_INPUT_ACTION(Fire, true),           MAKE_INPUT_ACTION(Aim, true),
     MAKE_INPUT_ACTION(Reload, true),    MAKE_INPUT_ACTION(SwitchFiremode, true),
 };
+
+template <class T, size_t N>
+static constexpr size_t Size(const T (&)[N])
+{
+    return N;
+}
+
+static_assert(Size(InputActions) <= MAX_uint8, "Too many input actions");
 
 #undef MAKE_INPUT_ACTION
 
@@ -216,8 +219,55 @@ void ACP0Character::SetupPlayerInputComponent(UInputComponent* Input)
 
     Input->BindAction(TEXT("Jump"), IE_Pressed, this, &ACP0Character::Jump);
 
-    for (const auto& Action : InputActionMap)
-        BindInputAction(Input, Action.Key);
+    for (size_t i = 0; i < Size(InputActions); ++i)
+    {
+        FInputActionBinding Pressed{InputActions[i].Name, IE_Pressed};
+        Pressed.ActionDelegate.GetDelegateForManualSet().BindWeakLambda(this, [this, i, LastTime = -1.0f]() mutable {
+            const auto GI = CastChecked<UCP0GameInstance>(GetGameInstance());
+            const auto Settings = GI->GetInputSettings();
+            const auto TypePtr = Settings->PressTypes.Find(InputActions[i].Name);
+            switch (TypePtr ? *TypePtr : EPressType::Continuous)
+            {
+            case EPressType::Press:
+                DispatchInputAction(i, EInputAction::Toggle);
+                break;
+            case EPressType::Continuous:
+                DispatchInputAction(i, EInputAction::Enable);
+                break;
+            case EPressType::DoubleClick: {
+                const auto CurTime = GetGameTimeSinceCreation();
+                if (CurTime - LastTime <= Settings->DoubleClickTimeout)
+                {
+                    DispatchInputAction(i, EInputAction::Toggle);
+                    LastTime = -1.0f;
+                }
+                else
+                {
+                    LastTime = CurTime;
+                }
+                break;
+            }
+            }
+        });
+        Input->AddActionBinding(MoveTemp(Pressed));
+
+        FInputActionBinding Released{InputActions[i].Name, IE_Released};
+        Released.ActionDelegate.GetDelegateForManualSet().BindWeakLambda(this, [this, i] {
+            const auto GI = CastChecked<UCP0GameInstance>(GetGameInstance());
+            const auto Settings = GI->GetInputSettings();
+            const auto TypePtr = Settings->PressTypes.Find(InputActions[i].Name);
+            switch (TypePtr ? *TypePtr : EPressType::Continuous)
+            {
+            case EPressType::Release:
+                DispatchInputAction(i, EInputAction::Toggle);
+                break;
+            case EPressType::Continuous:
+                DispatchInputAction(i, EInputAction::Disable);
+                break;
+            }
+        });
+        Input->AddActionBinding(MoveTemp(Released));
+    }
 }
 
 void ACP0Character::InterpEyeHeight(float DeltaTime)
@@ -258,6 +308,27 @@ void ACP0Character::PreReplication(IRepChangedPropertyTracker& ChangedPropertyTr
     }
 }
 
+void ACP0Character::ServerInputAction_Implementation(uint8 Idx, EInputAction Type)
+{
+    DispatchInputAction(Idx, Type);
+}
+
+bool ACP0Character::ServerInputAction_Validate(uint8 Idx, EInputAction Type)
+{
+    return true;
+}
+
+void ACP0Character::DispatchInputAction(size_t Idx, EInputAction Type)
+{
+    if (Idx < Size(InputActions))
+    {
+        const auto bExecuted = InputActions[Idx].Dispatcher(this, Type);
+
+        if (bExecuted && InputActions[Idx].bSendToServer && !HasAuthority())
+            ServerInputAction(static_cast<uint8>(Idx), Type);
+    }
+}
+
 void ACP0Character::MoveForward(float AxisValue)
 {
     if (!FMath::IsNearlyZero(AxisValue))
@@ -286,76 +357,3 @@ void ACP0Character::LookUp(float AxisValue)
     AddControllerPitchInput(AxisValue);
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void ACP0Character::ServerInputAction_Implementation(FName Name, EInputAction Type)
-{
-    DispatchInputAction(Name, Type);
-}
-
-bool ACP0Character::ServerInputAction_Validate(FName Name, EInputAction Type)
-{
-    return true;
-}
-
-void ACP0Character::DispatchInputAction(FName Name, EInputAction Type)
-{
-    
-    if (const auto Action = InputActionMap.Find(Name))
-    {
-        const auto bExecuted = Action->Dispatcher(this, Type);
-
-        if (bExecuted && Action->bSendToServer && !HasAuthority())
-            ServerInputAction(Name, Type);
-    }
-}
-
-void ACP0Character::BindInputAction(UInputComponent* Input, FName Name)
-{
-    FInputActionBinding Pressed{Name, IE_Pressed};
-    Pressed.ActionDelegate.GetDelegateForManualSet().BindWeakLambda(this, [=, LastTime = -1.0f]() mutable {
-        const auto GI = CastChecked<UCP0GameInstance>(GetGameInstance());
-        const auto Settings = GI->GetInputSettings();
-        const auto TypePtr = Settings->PressTypes.Find(Name);
-        switch (TypePtr ? *TypePtr : EPressType::Continuous)
-        {
-        case EPressType::Press:
-            DispatchInputAction(Name, EInputAction::Toggle);
-            break;
-        case EPressType::Continuous:
-            DispatchInputAction(Name, EInputAction::Enable);
-            break;
-        case EPressType::DoubleClick: {
-            const auto CurTime = GetGameTimeSinceCreation();
-            if (CurTime - LastTime <= Settings->DoubleClickTimeout)
-            {
-                DispatchInputAction(Name, EInputAction::Toggle);
-                LastTime = -1.0f;
-            }
-            else
-            {
-                LastTime = CurTime;
-            }
-            break;
-        }
-        }
-    });
-    Input->AddActionBinding(MoveTemp(Pressed));
-
-    FInputActionBinding Released{Name, IE_Released};
-    Released.ActionDelegate.GetDelegateForManualSet().BindWeakLambda(this, [=] {
-        const auto GI = CastChecked<UCP0GameInstance>(GetGameInstance());
-        const auto Settings = GI->GetInputSettings();
-        const auto TypePtr = Settings->PressTypes.Find(Name);
-        switch (TypePtr ? *TypePtr : EPressType::Continuous)
-        {
-        case EPressType::Release:
-            DispatchInputAction(Name, EInputAction::Toggle);
-            break;
-        case EPressType::Continuous:
-            DispatchInputAction(Name, EInputAction::Disable);
-            break;
-        }
-    });
-    Input->AddActionBinding(MoveTemp(Released));
-}
