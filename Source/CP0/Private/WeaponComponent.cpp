@@ -43,6 +43,9 @@ void UWeaponComponent::OnRep_Weapon()
 void UWeaponComponent::UpdateTransform(float DeltaTime)
 {
     const auto Owner = GetCharOwner();
+    if (!Owner->IsLocallyControlled())
+        return;
+    
     const auto AimRot = Owner->GetBaseAimRotation().GetNormalized();
     auto Diff = (PrevAimRot - AimRot).GetNormalized();
     Diff.Yaw *= 1.0f - FMath::Abs(AimRot.Pitch) / 90.0f;
