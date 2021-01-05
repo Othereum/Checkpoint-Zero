@@ -13,5 +13,4 @@ UCLASS()
 class CP0_API ACP0GameMode : public AGameModeBase
 {
 	GENERATED_BODY()
-	
 };

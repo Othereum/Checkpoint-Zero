@@ -8,16 +8,15 @@
 UENUM(BlueprintType)
 enum class EPosture : uint8
 {
-    Stand,
-    Crouch,
-    Prone
+	Stand,
+	Crouch,
+	Prone
 };
 
 UENUM(BlueprintType, meta = (Bitflags))
 enum class EWeaponFireMode : uint8
 {
-    SemiAuto,
-    Burst,
-    FullAuto
+	SemiAuto,
+	Burst,
+	FullAuto
 };
-

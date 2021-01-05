@@ -3,4 +3,4 @@
 #include "CP0.h"
 #include "Modules/ModuleManager.h"
 
-IMPLEMENT_PRIMARY_GAME_MODULE( FDefaultGameModuleImpl, CP0, "CP0" );
+IMPLEMENT_PRIMARY_GAME_MODULE(FDefaultGameModuleImpl, CP0, "CP0");

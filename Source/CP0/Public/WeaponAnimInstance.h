@@ -12,11 +12,11 @@
 UCLASS()
 class CP0_API UWeaponAnimInstance : public UAnimInstance
 {
-    GENERATED_BODY()
+	GENERATED_BODY()
 
-  private:
-    void NativeUpdateAnimation(float DeltaSeconds) override;
+private:
+	void NativeUpdateAnimation(float DeltaSeconds) override;
 
-    UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-    EWeaponFireMode FireMode;
+	UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	EWeaponFireMode FireMode;
 };

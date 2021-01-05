@@ -11,8 +11,8 @@
 UCLASS()
 class CP0_API ACP0PCM final : public APlayerCameraManager
 {
-    GENERATED_BODY()
+	GENERATED_BODY()
 
-  public:
-    void UpdateCamera(float DeltaTime) override;
+public:
+	void UpdateCamera(float DeltaTime) override;
 };

@@ -13,17 +13,17 @@ class UCP0InputSettings;
 UCLASS()
 class CP0_API UCP0GameInstance final : public UGameInstance
 {
-    GENERATED_BODY()
+	GENERATED_BODY()
 
-  public:
-    UCP0GameInstance();
+public:
+	UCP0GameInstance();
 
-    UCP0InputSettings* GetInputSettings() const
-    {
-        return InputSettings;
-    }
+	UCP0InputSettings* GetInputSettings() const
+	{
+		return InputSettings;
+	}
 
-  private:
-    UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-    UCP0InputSettings* InputSettings;
+private:
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	UCP0InputSettings* InputSettings;
 };

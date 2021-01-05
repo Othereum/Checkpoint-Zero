@@ -12,44 +12,44 @@
 UCLASS()
 class CP0_API UCP0AnimInstance : public UAnimInstance
 {
-    GENERATED_BODY()
+	GENERATED_BODY()
 
-  private:
-    void NativeUpdateAnimation(float DeltaSeconds) override;
+private:
+	void NativeUpdateAnimation(float DeltaSeconds) override;
 
-    UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-    FRotator MeshRotOffset;
+	UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	FRotator MeshRotOffset;
 
-    UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true, UIMin = 0))
-    float MoveSpeed;
+	UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true, UIMin = 0))
+	float MoveSpeed;
 
-    UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly,
-              meta = (AllowPrivateAccess = true, UIMin = -180, UIMax = 180))
-    float MoveDirection;
+	UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly,
+		meta = (AllowPrivateAccess = true, UIMin = -180, UIMax = 180))
+	float MoveDirection;
 
-    UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly,
-              meta = (AllowPrivateAccess = true, UIMin = -90, UIMax = 90))
-    float AimPitch;
+	UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly,
+		meta = (AllowPrivateAccess = true, UIMin = -90, UIMax = 90))
+	float AimPitch;
 
-    UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly,
-              meta = (AllowPrivateAccess = true, UIMin = -180, UIMax = 180))
-    float AimYaw;
+	UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly,
+		meta = (AllowPrivateAccess = true, UIMin = -180, UIMax = 180))
+	float AimYaw;
 
-    UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly,
-              meta = (AllowPrivateAccess = true, UIMin = -180, UIMax = 180))
-    float YawSpeed;
-    float PrevYaw;
-    float YawCalcLag;
+	UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly,
+		meta = (AllowPrivateAccess = true, UIMin = -180, UIMax = 180))
+	float YawSpeed;
+	float PrevYaw;
+	float YawCalcLag;
 
-    UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-    EPosture Posture = EPosture::Stand;
+	UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	EPosture Posture = EPosture::Stand;
 
-    UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-    bool bIsSprinting = false;
+	UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	bool bIsSprinting = false;
 
-    UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-    bool bIsOnGround = true;
+	UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	bool bIsOnGround = true;
 
-    UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-    bool bShouldPlayPostureAnim = true;
+	UPROPERTY(EditInstanceOnly, Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	bool bShouldPlayPostureAnim = true;
 };

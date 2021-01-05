@@ -11,12 +11,12 @@
 UCLASS()
 class CP0_API UCP0Settings : public UObject
 {
-    GENERATED_BODY()
+	GENERATED_BODY()
 
-  public:
-    UFUNCTION(BlueprintCallable)
-    void Save()
-    {
-        SaveConfig();
-    }
+public:
+	UFUNCTION(BlueprintCallable)
+	void Save()
+	{
+		SaveConfig();
+	}
 };

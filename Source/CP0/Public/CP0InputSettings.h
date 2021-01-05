@@ -8,10 +8,10 @@
 UENUM(BlueprintType)
 enum class EPressType : uint8
 {
-    Press,
-    Release,
-    Continuous,
-    DoubleClick
+	Press,
+	Release,
+	Continuous,
+	DoubleClick
 };
 
 /**
@@ -20,12 +20,12 @@ enum class EPressType : uint8
 UCLASS(Config = Input)
 class CP0_API UCP0InputSettings final : public UCP0Settings
 {
-    GENERATED_BODY()
+	GENERATED_BODY()
 
-  public:
-    UPROPERTY(Config, BlueprintReadWrite)
-    float DoubleClickTimeout = 0.3;
+public:
+	UPROPERTY(Config, BlueprintReadWrite)
+	float DoubleClickTimeout = 0.3;
 
-    UPROPERTY(Config, BlueprintReadWrite)
-    TMap<FName, EPressType> PressTypes;
+	UPROPERTY(Config, BlueprintReadWrite)
+	TMap<FName, EPressType> PressTypes;
 };

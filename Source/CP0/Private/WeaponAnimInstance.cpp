@@ -5,12 +5,11 @@
 
 void UWeaponAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
-    Super::NativeUpdateAnimation(DeltaSeconds);
+	Super::NativeUpdateAnimation(DeltaSeconds);
 
-    const auto Weapon = Cast<AWeapon>(GetOwningActor());
-    if (!Weapon)
-        return;
+	const auto Weapon = Cast<AWeapon>(GetOwningActor());
+	if (!Weapon)
+		return;
 
-    FireMode = Weapon->GetFireMode();
+	FireMode = Weapon->GetFireMode();
 }
-

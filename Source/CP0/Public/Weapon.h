@@ -12,153 +12,153 @@ class UWeaponComponent;
 UENUM(BlueprintType)
 enum class EWeaponState : uint8
 {
-    Idle,
-    Firing,
-    Reloading,
-    Deploying,
-    Holstering
+	Idle,
+	Firing,
+	Reloading,
+	Deploying,
+	Holstering
 };
 
 USTRUCT()
 struct FWeaponCorrectionData
 {
-    GENERATED_BODY()
+	GENERATED_BODY()
 
-    UPROPERTY()
-    uint8 Clip;
+	UPROPERTY()
+	uint8 Clip;
 
-    UPROPERTY()
-    EWeaponFireMode FireMode;
+	UPROPERTY()
+	EWeaponFireMode FireMode;
 
-    UPROPERTY()
-    EWeaponState State;
+	UPROPERTY()
+	EWeaponState State;
 
-    UPROPERTY()
-    bool bAiming;
+	UPROPERTY()
+	bool bAiming;
 };
 
 UCLASS()
 class CP0_API AWeapon : public AActor
 {
-    GENERATED_BODY()
+	GENERATED_BODY()
 
-  public:
-    AWeapon();
-    ACP0Character* GetCharOwner() const;
-    UWeaponComponent* GetWeaponComp() const;
-    TSubclassOf<UAnimInstance> GetArmsAnimClass() const { return ArmsAnimClass; }
+public:
+	AWeapon();
+	ACP0Character* GetCharOwner() const;
+	UWeaponComponent* GetWeaponComp() const;
+	TSubclassOf<UAnimInstance> GetArmsAnimClass() const { return ArmsAnimClass; }
 
-    void StartFiring();
-    void StopFiring();
+	void StartFiring();
+	void StopFiring();
 
-    void SetAiming(bool bNewAiming);
-    void Reload();
-    void SwitchFiremode();
+	void SetAiming(bool bNewAiming);
+	void Reload();
+	void SwitchFiremode();
 
-    bool CanFire() const;
-    bool IsAiming() const { return bAiming; }
-    EWeaponState GetState() const { return State; }
-    EWeaponFireMode GetFireMode() const { return FireMode; }
-    float GetFireDelay() const { return 60.0f / RPM; }
+	bool CanFire() const;
+	bool IsAiming() const { return bAiming; }
+	EWeaponState GetState() const { return State; }
+	EWeaponFireMode GetFireMode() const { return FireMode; }
+	float GetFireDelay() const { return 60.0f / RPM; }
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    FTransform ArmsOffset;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FTransform ArmsOffset;
 
-  protected:
-    void BeginPlay() override;
-    void Tick(float DeltaTime) override;
-    void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+protected:
+	void BeginPlay() override;
+	void Tick(float DeltaTime) override;
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-    UFUNCTION(BlueprintImplementableEvent)
-    void OnFire();
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnFire();
 
-    UFUNCTION(BlueprintImplementableEvent)
-    void OnDryFire();
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnDryFire();
 
-    UFUNCTION(BlueprintImplementableEvent)
-    void OnReloadStart(bool bEmpty);
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnReloadStart(bool bEmpty);
 
-    UFUNCTION(BlueprintImplementableEvent)
-    void OnFiremodeSwitched();
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnFiremodeSwitched();
 
-    UFUNCTION(BlueprintImplementableEvent)
-    void OnReloadCancelled();
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnReloadCancelled();
 
-  private:
-    void Tick_Idle(float DeltaTime);
-    void Tick_Firing(float DeltaTime);
-    void Tick_Reloading(float DeltaTime);
-    void Tick_Deploying(float DeltaTime);
-    void Tick_Holstering(float DeltaTime);
+private:
+	void Tick_Idle(float DeltaTime);
+	void Tick_Firing(float DeltaTime);
+	void Tick_Reloading(float DeltaTime);
+	void Tick_Deploying(float DeltaTime);
+	void Tick_Holstering(float DeltaTime);
 
-    void Enter_Idle();
-    void Enter_Firing();
-    void Enter_Reloading();
-    void Enter_Deploying();
-    void Enter_Holstering();
-    
-    void Exit_Idle();
-    void Exit_Firing();
-    void Exit_Reloading();
-    void Exit_Deploying();
-    void Exit_Holstering();
+	void Enter_Idle();
+	void Enter_Firing();
+	void Enter_Reloading();
+	void Enter_Deploying();
+	void Enter_Holstering();
 
-    bool Fire();
-    bool CanDoCommonAction() const;
+	void Exit_Idle();
+	void Exit_Firing();
+	void Exit_Reloading();
+	void Exit_Deploying();
+	void Exit_Holstering();
 
-    void SetClip(uint8 NewClip);
-    void SetState(EWeaponState NewState);
-    void SetFireMode(EWeaponFireMode NewFM);
+	bool Fire();
+	bool CanDoCommonAction() const;
 
-    void CorrectClientState();
+	void SetClip(uint8 NewClip);
+	void SetState(EWeaponState NewState);
+	void SetFireMode(EWeaponFireMode NewFM);
 
-    UFUNCTION(Client, Unreliable)
-    void Client_CorrectState(FWeaponCorrectionData Data);
+	void CorrectClientState();
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-    USkeletalMeshComponent* Mesh;
+	UFUNCTION(Client, Unreliable)
+	void Client_CorrectState(FWeaponCorrectionData Data);
 
-    UPROPERTY(EditDefaultsOnly)
-    TSubclassOf<UAnimInstance> ArmsAnimClass;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	USkeletalMeshComponent* Mesh;
 
-    UPROPERTY(EditAnywhere, meta = (UIMin = 1, ClampMin = 1))
-    float RPM = 650.0f;
-    float FireLag;
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UAnimInstance> ArmsAnimClass;
 
-    UPROPERTY(EditAnywhere)
-    float ReloadTime_Tactical = 2.0f;
+	UPROPERTY(EditAnywhere, meta = (UIMin = 1, ClampMin = 1))
+	float RPM = 650.0f;
+	float FireLag;
 
-    UPROPERTY(EditAnywhere)
-    float ReloadTime_Empty = 3.0f;
+	UPROPERTY(EditAnywhere)
+	float ReloadTime_Tactical = 2.0f;
 
-    float CurrentReloadTime;
+	UPROPERTY(EditAnywhere)
+	float ReloadTime_Empty = 3.0f;
 
-    float Clip_LastModified;
-    float FireMode_LastModified;
-    float State_LastModified;
-    float bAiming_LastModified;
-    float NextCorrection;
+	float CurrentReloadTime;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-    uint8 ClipSize = 30;
+	float Clip_LastModified;
+	float FireMode_LastModified;
+	float State_LastModified;
+	float bAiming_LastModified;
+	float NextCorrection;
 
-    UPROPERTY(Replicated, Transient, EditInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-    uint8 Clip;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	uint8 ClipSize = 30;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly,
-              meta = (AllowPrivateAccess = true, Bitmask, BitmaskEnum = EWeaponFireMode))
-    uint8 FireModes;
+	UPROPERTY(Replicated, Transient, EditInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	uint8 Clip;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-    uint8 BurstCount = 3;
-    uint8 CurBurstCount;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly,
+		meta = (AllowPrivateAccess = true, Bitmask, BitmaskEnum = EWeaponFireMode))
+	uint8 FireModes;
 
-    UPROPERTY(Replicated, Transient, EditInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-    EWeaponFireMode FireMode;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	uint8 BurstCount = 3;
+	uint8 CurBurstCount;
 
-    UPROPERTY(Replicated, Transient, EditInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-    EWeaponState State;
+	UPROPERTY(Replicated, Transient, EditInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	EWeaponFireMode FireMode;
 
-    UPROPERTY(Replicated, Transient, EditInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-    bool bAiming;
+	UPROPERTY(Replicated, Transient, EditInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	EWeaponState State;
+
+	UPROPERTY(Replicated, Transient, EditInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	bool bAiming;
 };

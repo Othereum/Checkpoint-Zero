@@ -7,118 +7,119 @@
 
 UWeaponComponent::UWeaponComponent()
 {
-    PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = true;
 }
 
 ACP0Character* UWeaponComponent::GetCharOwner() const
 {
-    return CastChecked<ACP0Character>(GetOwner(), ECastCheckedType::NullAllowed);
+	return CastChecked<ACP0Character>(GetOwner(), ECastCheckedType::NullAllowed);
 }
 
 const UWeaponComponent* UWeaponComponent::GetDefaultSelf() const
 {
-    return GetDefault<ACP0Character>(GetOwner()->GetClass())->GetWeaponComp();
+	return GetDefault<ACP0Character>(GetOwner()->GetClass())->GetWeaponComp();
 }
 
 void UWeaponComponent::TickComponent(float DeltaTime, ELevelTick TickType,
                                      FActorComponentTickFunction* ThisTickFunction)
 {
-    Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
 void UWeaponComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
-    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-    DOREPLIFETIME(UWeaponComponent, Weapon);
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(UWeaponComponent, Weapon);
 }
 
 void UWeaponComponent::OnRep_Weapon()
 {
-    if (Weapon)
-    {
-        SetAnimInstanceClass(Weapon->GetArmsAnimClass());
-    }
+	if (Weapon)
+	{
+		SetAnimInstanceClass(Weapon->GetArmsAnimClass());
+	}
 }
 
 void UWeaponComponent::UpdateTransform(float DeltaTime)
 {
-    const auto Owner = GetCharOwner();
-    if (!Owner->IsLocallyControlled())
-        return;
-    
-    const auto AimRot = Owner->GetBaseAimRotation().GetNormalized();
-    auto Diff = (PrevAimRot - AimRot).GetNormalized();
-    Diff.Yaw *= 1.0f - FMath::Abs(AimRot.Pitch) / 90.0f;
+	const auto Owner = GetCharOwner();
+	if (!Owner->IsLocallyControlled())
+		return;
 
-    AimRotSpeed = FMath::RInterpTo(AimRotSpeed, Diff, DeltaTime, 10.0f);
-    PrevAimRot = AimRot;
-    LocalOffset.SetRotation(FMath::QInterpTo(LocalOffset.GetRotation(), AimRotSpeed.Quaternion().Inverse(), DeltaTime, 10.0f));
+	const auto AimRot = Owner->GetBaseAimRotation().GetNormalized();
+	auto Diff = (PrevAimRot - AimRot).GetNormalized();
+	Diff.Yaw *= 1.0f - FMath::Abs(AimRot.Pitch) / 90.0f;
 
-    auto NewTF = GetDefaultSelf()->GetRelativeTransform();
-    if (Weapon)
-        NewTF *= Weapon->ArmsOffset;
-    NewTF *= LocalOffset;
-    NewTF *= {AimRot, Owner->GetPawnViewLocation()};
-    SetWorldTransform(NewTF);
+	AimRotSpeed = FMath::RInterpTo(AimRotSpeed, Diff, DeltaTime, 10.0f);
+	PrevAimRot = AimRot;
+	LocalOffset.SetRotation(FMath::QInterpTo(LocalOffset.GetRotation(), AimRotSpeed.Quaternion().Inverse(), DeltaTime,
+	                                         10.0f));
+
+	auto NewTF = GetDefaultSelf()->GetRelativeTransform();
+	if (Weapon)
+		NewTF *= Weapon->ArmsOffset;
+	NewTF *= LocalOffset;
+	NewTF *= {AimRot, Owner->GetPawnViewLocation()};
+	SetWorldTransform(NewTF);
 }
 
 void UWeaponComponent::SetWeapon(AWeapon* NewWeapon)
 {
-    if (Weapon)
-    {
-        Weapon->SetOwner(nullptr);
-        Weapon->SetInstigator(nullptr);
-    }
+	if (Weapon)
+	{
+		Weapon->SetOwner(nullptr);
+		Weapon->SetInstigator(nullptr);
+	}
 
-    Weapon = NewWeapon;
-    SetAnimInstanceClass(Weapon->GetArmsAnimClass());
+	Weapon = NewWeapon;
+	SetAnimInstanceClass(Weapon->GetArmsAnimClass());
 
-    Weapon->AttachToComponent(this, {EAttachmentRule::KeepRelative, true}, TEXT("R_GunSocket"));
-    Weapon->SetActorRelativeTransform(FTransform::Identity);
+	Weapon->AttachToComponent(this, {EAttachmentRule::KeepRelative, true}, TEXT("R_GunSocket"));
+	Weapon->SetActorRelativeTransform(FTransform::Identity);
 
-    const auto Owner = GetCharOwner();
-    Weapon->SetOwner(Owner);
-    Weapon->SetInstigator(Owner);
+	const auto Owner = GetCharOwner();
+	Weapon->SetOwner(Owner);
+	Weapon->SetInstigator(Owner);
 }
 
 void FInputAction_Fire::Enable(ACP0Character* Character)
 {
-    if (const auto Weapon = Character->GetWeaponComp()->GetWeapon())
-        Weapon->StartFiring();
+	if (const auto Weapon = Character->GetWeaponComp()->GetWeapon())
+		Weapon->StartFiring();
 }
 
 void FInputAction_Fire::Disable(ACP0Character* Character)
 {
-    if (const auto Weapon = Character->GetWeaponComp()->GetWeapon())
-        Weapon->StopFiring();
+	if (const auto Weapon = Character->GetWeaponComp()->GetWeapon())
+		Weapon->StopFiring();
 }
 
 void FInputAction_Aim::Enable(ACP0Character* Character)
 {
-    if (const auto Weapon = Character->GetWeaponComp()->GetWeapon())
-        Weapon->SetAiming(true);
+	if (const auto Weapon = Character->GetWeaponComp()->GetWeapon())
+		Weapon->SetAiming(true);
 }
 
 void FInputAction_Aim::Disable(ACP0Character* Character)
 {
-    if (const auto Weapon = Character->GetWeaponComp()->GetWeapon())
-        Weapon->SetAiming(false);
+	if (const auto Weapon = Character->GetWeaponComp()->GetWeapon())
+		Weapon->SetAiming(false);
 }
 
 void FInputAction_Aim::Toggle(ACP0Character* Character)
 {
-    if (const auto Weapon = Character->GetWeaponComp()->GetWeapon())
-        Weapon->SetAiming(!Weapon->IsAiming());
+	if (const auto Weapon = Character->GetWeaponComp()->GetWeapon())
+		Weapon->SetAiming(!Weapon->IsAiming());
 }
 
 void FInputAction_Reload::Enable(ACP0Character* Character)
 {
-    if (const auto Weapon = Character->GetWeaponComp()->GetWeapon())
-        Weapon->Reload();
+	if (const auto Weapon = Character->GetWeaponComp()->GetWeapon())
+		Weapon->Reload();
 }
 
 void FInputAction_SwitchFiremode::Enable(ACP0Character* Character)
 {
-    if (const auto Weapon = Character->GetWeaponComp()->GetWeapon())
-        Weapon->SwitchFiremode();
+	if (const auto Weapon = Character->GetWeaponComp()->GetWeapon())
+		Weapon->SwitchFiremode();
 }
