@@ -5,6 +5,7 @@
 #include "CP0CharacterMovement.h"
 #include "CP0GameInstance.h"
 #include "CP0InputSettings.h"
+#include "Weapon.h"
 #include "WeaponComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -110,7 +111,8 @@ ACP0Character::ACP0Character(const FObjectInitializer& Initializer)
 	: Super{Initializer.SetDefaultSubobjectClass<UCP0CharacterMovement>(CharacterMovementComponentName)},
 	  Camera{CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"))},
 	  WeaponComp{CreateDefaultSubobject<UWeaponComponent>(TEXT("WeaponComp"))},
-	  LegsMesh{CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("LegsMesh"))}
+	  LegsMesh{CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("LegsMesh"))},
+	  ArmsMesh{CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ArmsMesh"))}
 {
 	PrimaryActorTick.bCanEverTick = true;
 	BaseEyeHeight = 150.0f;
@@ -118,8 +120,8 @@ ACP0Character::ACP0Character(const FObjectInitializer& Initializer)
 	bUseControllerRotationYaw = false;
 
 	Camera->SetupAttachment(RootComponent);
-	WeaponComp->SetupAttachment(RootComponent);
 	LegsMesh->SetupAttachment(GetMesh());
+	ArmsMesh->SetupAttachment(RootComponent);
 }
 
 UCP0CharacterMovement* ACP0Character::GetCP0Movement() const
@@ -145,7 +147,7 @@ FRotator ACP0Character::GetBaseAimRotation() const
 FRotator ACP0Character::GetViewRotation() const
 {
 	auto Rotation = Super::GetViewRotation();
-	Rotation += WeaponComp->GetSocketRotation(TEXT("CameraSocket")) - WeaponComp->GetComponentRotation();
+	Rotation += ArmsMesh->GetSocketRotation(TEXT("CameraSocket")) - ArmsMesh->GetComponentRotation();
 	Rotation.Roll = 0.0f;
 	return Rotation;
 }
@@ -207,7 +209,7 @@ void ACP0Character::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	InterpEyeHeight(DeltaTime);
 	UpdateLegsTransform();
-	WeaponComp->UpdateTransform(DeltaTime);
+	UpdateArmsTransform(DeltaTime);
 	Camera->SetWorldLocationAndRotation(GetPawnViewLocation(), GetViewRotation());
 }
 
@@ -296,6 +298,26 @@ void ACP0Character::UpdateLegsTransform() const
 	const auto BaseLoc = GetMesh()->GetComponentLocation();
 
 	LegsMesh->SetWorldLocation(BaseLoc + ViewYaw.Vector() * OffsetX);
+}
+
+void ACP0Character::UpdateArmsTransform(float DeltaTime)
+{
+	const auto AimRot = GetBaseAimRotation().GetNormalized();
+	auto Diff = (PrevAimRot - AimRot).GetNormalized();
+	Diff.Yaw *= 1.0f - FMath::Abs(AimRot.Pitch) / 90.0f;
+
+	AimRotSpeed = FMath::RInterpTo(AimRotSpeed, Diff, DeltaTime, 10.0f);
+	PrevAimRot = AimRot;
+	ArmsLocalOffset.SetRotation(FMath::QInterpTo(ArmsLocalOffset.GetRotation(), AimRotSpeed.Quaternion().Inverse(),
+	                                             DeltaTime, 10.0f));
+
+	const auto DefArms = GetDefault<ACP0Character>(GetClass())->ArmsMesh;
+	auto NewTF = DefArms->GetRelativeTransform();
+	if (const auto Weapon = WeaponComp->GetWeapon())
+		NewTF *= Weapon->ArmsOffset;
+	NewTF *= ArmsLocalOffset;
+	NewTF *= {AimRot, GetPawnViewLocation()};
+	ArmsMesh->SetWorldTransform(NewTF);
 }
 
 void ACP0Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

@@ -28,14 +28,15 @@ public:
 	UCP0CharacterMovement* GetCP0Movement() const;
 	UWeaponComponent* GetWeaponComp() const { return WeaponComp; }
 	UCameraComponent* GetCamera() const { return Camera; }
+	USkeletalMeshComponent* GetArms() const { return ArmsMesh; }
 
-	void RecalculateBaseEyeHeight() override
+	virtual void RecalculateBaseEyeHeight() override
 	{
 	}
 
-	bool IsMoveInputIgnored() const override;
-	FRotator GetBaseAimRotation() const override;
-	FRotator GetViewRotation() const override;
+	virtual bool IsMoveInputIgnored() const override;
+	virtual FRotator GetBaseAimRotation() const override;
+	virtual FRotator GetViewRotation() const override;
 
 	void SetRemoteViewRotation(FRotator Rotation);
 	void SetEyeHeight(float NewEyeHeight);
@@ -47,17 +48,18 @@ public:
 	void OnPostureChanged(EPosture PrevPosture, EPosture NewPosture);
 
 protected:
-	void BeginPlay() override;
-	void Tick(float DeltaTime) override;
-	void SetupPlayerInputComponent(UInputComponent* InputComp) override;
-	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	void PreReplication(IRepChangedPropertyTracker& ChangedPropertyTracker) override;
+	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
+	virtual void SetupPlayerInputComponent(UInputComponent* InputComp) override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void PreReplication(IRepChangedPropertyTracker& ChangedPropertyTracker) override;
 
 private:
 	friend UCP0CharacterMovement;
 
 	void InterpEyeHeight(float DeltaTime);
 	void UpdateLegsTransform() const;
+	void UpdateArmsTransform(float DeltaTime);
 
 	UFUNCTION(Server, Reliable, WithValidation)
 	void ServerInputAction(uint8 Idx, EInputAction Type);
@@ -77,6 +79,13 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	USkeletalMeshComponent* LegsMesh;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	USkeletalMeshComponent* ArmsMesh;
+
+	FTransform ArmsLocalOffset;
+	FRotator PrevAimRot;
+	FRotator AimRotSpeed;
+	
 	UPROPERTY(EditAnywhere, Category = "Camera")
 	float ProneEyeHeight = 35.0f;
 

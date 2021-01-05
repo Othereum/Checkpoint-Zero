@@ -12,7 +12,7 @@ class AWeapon;
  *
  */
 UCLASS()
-class CP0_API UWeaponComponent : public USkeletalMeshComponent
+class CP0_API UWeaponComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
@@ -20,27 +20,25 @@ public:
 	UWeaponComponent();
 	ACP0Character* GetCharOwner() const;
 	const UWeaponComponent* GetDefaultSelf() const;
-	void UpdateTransform(float DeltaTime);
 
 	UFUNCTION(BlueprintCallable)
-	void SetWeapon(AWeapon* NewWeapon);
+	void EquipWeapon(AWeapon* NewWeapon);
+	
 	AWeapon* GetWeapon() const { return Weapon; }
 
 protected:
-	void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 private:
+	friend AWeapon;
+	
 	UFUNCTION()
 	void OnRep_Weapon();
 
 	UPROPERTY(ReplicatedUsing = OnRep_Weapon, Transient, VisibleInstanceOnly, BlueprintReadOnly, meta = (
 		AllowPrivateAccess = true))
 	AWeapon* Weapon;
-
-	FTransform LocalOffset;
-	FRotator PrevAimRot;
-	FRotator AimRotSpeed;
 };
 
 struct CP0_API FInputAction_Fire

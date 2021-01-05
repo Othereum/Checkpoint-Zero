@@ -6,6 +6,7 @@
 #include "CP0.h"
 #include "Weapon.generated.h"
 
+class AWeapon;
 class ACP0Character;
 class UWeaponComponent;
 
@@ -17,6 +18,27 @@ enum class EWeaponState : uint8
 	Reloading,
 	Deploying,
 	Holstering
+};
+
+struct FWeaponState_Firing
+{
+	uint8 CurBurstCount;
+};
+
+struct FWeaponState_Reloading
+{
+	float ElapsedTime;
+};
+
+struct FWeaponState_Deploying
+{
+	float ElapsedTime;
+};
+
+struct FWeaponState_Holstering
+{
+	float ElapsedTime;
+	AWeapon* SwitchingTo;
 };
 
 USTRUCT()
@@ -44,30 +66,41 @@ class CP0_API AWeapon : public AActor
 
 public:
 	AWeapon();
-	ACP0Character* GetCharOwner() const;
 	UWeaponComponent* GetWeaponComp() const;
 	TSubclassOf<UAnimInstance> GetArmsAnimClass() const { return ArmsAnimClass; }
+
+	UFUNCTION(BlueprintCallable)
+	ACP0Character* GetCharOwner() const;
+
+	void Deploy(ACP0Character* Char);
+	void Holster(AWeapon* SwitchingTo);
 
 	void StartFiring();
 	void StopFiring();
 
 	void SetAiming(bool bNewAiming);
 	void Reload();
-	void SwitchFiremode();
+	void SwitchFireMode();
 
 	bool CanFire() const;
 	bool IsAiming() const { return bAiming; }
 	EWeaponState GetState() const { return State; }
 	EWeaponFireMode GetFireMode() const { return FireMode; }
-	float GetFireDelay() const { return 60.0f / RPM; }
+	float GetFireDelay() const { return 60.0f / Rpm; }
+
+	UFUNCTION(BlueprintCallable)
+	void PlayMontage(UAnimMontage* Montage) const;
+
+	UFUNCTION(BlueprintCallable)
+	void StopMontage(float BlendOutTime = 0.0f, UAnimMontage* Montage = nullptr) const;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FTransform ArmsOffset;
 
 protected:
-	void BeginPlay() override;
-	void Tick(float DeltaTime) override;
-	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnFire();
@@ -79,10 +112,16 @@ protected:
 	void OnReloadStart(bool bEmpty);
 
 	UFUNCTION(BlueprintImplementableEvent)
-	void OnFiremodeSwitched();
+	void OnFireModeSwitched();
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnReloadCancelled();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnDeploy();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnHolster();
 
 private:
 	void Tick_Idle(float DeltaTime);
@@ -108,7 +147,7 @@ private:
 
 	void SetClip(uint8 NewClip);
 	void SetState(EWeaponState NewState);
-	void SetFireMode(EWeaponFireMode NewFM);
+	void SetFireMode(EWeaponFireMode NewFm);
 
 	void CorrectClientState();
 
@@ -116,13 +155,24 @@ private:
 	void Client_CorrectState(FWeaponCorrectionData Data);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-	USkeletalMeshComponent* Mesh;
+	USkeletalMeshComponent* Mesh1P;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	USkeletalMeshComponent* Mesh3P;
 
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UAnimInstance> ArmsAnimClass;
 
+	union
+	{
+		FWeaponState_Firing Firing;
+		FWeaponState_Reloading Reloading;
+		FWeaponState_Deploying Deploying;
+		FWeaponState_Holstering Holstering;
+	} StateObj;
+
 	UPROPERTY(EditAnywhere, meta = (UIMin = 1, ClampMin = 1))
-	float RPM = 650.0f;
+	float Rpm = 650.0f;
 	float FireLag;
 
 	UPROPERTY(EditAnywhere)
@@ -131,12 +181,16 @@ private:
 	UPROPERTY(EditAnywhere)
 	float ReloadTime_Empty = 3.0f;
 
-	float CurrentReloadTime;
+	UPROPERTY(EditAnywhere)
+	float DeployTime = 0.67f;
+
+	UPROPERTY(EditAnywhere)
+	float HolsterTime = 0.67f;
 
 	float Clip_LastModified;
 	float FireMode_LastModified;
 	float State_LastModified;
-	float bAiming_LastModified;
+	float Aiming_LastModified;
 	float NextCorrection;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
@@ -151,7 +205,6 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	uint8 BurstCount = 3;
-	uint8 CurBurstCount;
 
 	UPROPERTY(Replicated, Transient, EditInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	EWeaponFireMode FireMode;
