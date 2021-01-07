@@ -155,8 +155,11 @@ void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 
 void AWeapon::PlayMontage(UAnimMontage* Montage) const
 {
-	Mesh1P->GetAnimInstance()->Montage_Play(Montage);
-	Mesh3P->GetAnimInstance()->Montage_Play(Montage);
+	if (Montage)
+	{
+		Mesh1P->GetAnimInstance()->Montage_Play(Montage);
+		Mesh3P->GetAnimInstance()->Montage_Play(Montage);
+	}
 }
 
 void AWeapon::StopMontage(float BlendOutTime, UAnimMontage* Montage) const
