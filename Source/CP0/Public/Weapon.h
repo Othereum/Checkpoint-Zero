@@ -2,8 +2,8 @@
 
 #pragma once
 
-#include "GameFramework/Actor.h"
 #include "CP0.h"
+#include "GameFramework/Actor.h"
 #include "Weapon.generated.h"
 
 class AWeapon;
@@ -13,36 +13,26 @@ class UWeaponComponent;
 UENUM(BlueprintType)
 enum class EWeaponState : uint8
 {
-	Idle,
-	Firing,
+	Ready,
 	Reloading,
 	Deploying,
 	Holstering
 };
 
-struct FWeaponState_Firing
+USTRUCT()
+struct FClientWeaponCorrectionData
 {
-	uint8 CurBurstCount;
-};
+	GENERATED_BODY()
 
-struct FWeaponState_Reloading
-{
-	float ElapsedTime;
-};
+	UPROPERTY()
+	EWeaponFireMode FireMode;
 
-struct FWeaponState_Deploying
-{
-	float ElapsedTime;
-};
-
-struct FWeaponState_Holstering
-{
-	float ElapsedTime;
-	AWeapon* SwitchingTo;
+	UPROPERTY()
+	uint8 bAiming : 1;
 };
 
 USTRUCT()
-struct FWeaponCorrectionData
+struct FMulticastWeaponCorrectionData
 {
 	GENERATED_BODY()
 
@@ -50,13 +40,7 @@ struct FWeaponCorrectionData
 	uint8 Clip;
 
 	UPROPERTY()
-	EWeaponFireMode FireMode;
-
-	UPROPERTY()
 	EWeaponState State;
-
-	UPROPERTY()
-	bool bAiming;
 };
 
 UCLASS()
@@ -73,8 +57,9 @@ public:
 	ACP0Character* GetCharOwner() const;
 
 	void Deploy(ACP0Character* Char);
-	void Holster(AWeapon* SwitchingTo);
+	void Holster(AWeapon* SwitchTo);
 
+	// 클라이언트 전용. 키 입력시 호출됨.
 	void StartFiring();
 	void StopFiring();
 
@@ -82,7 +67,6 @@ public:
 	void Reload();
 	void SwitchFireMode();
 
-	bool CanFire() const;
 	bool IsAiming() const { return bAiming; }
 	EWeaponState GetState() const { return State; }
 	EWeaponFireMode GetFireMode() const { return FireMode; }
@@ -124,23 +108,23 @@ protected:
 	void OnHolster();
 
 private:
-	void Tick_Idle(float DeltaTime);
-	void Tick_Firing(float DeltaTime);
+	void Tick_Ready(float DeltaTime);
 	void Tick_Reloading(float DeltaTime);
 	void Tick_Deploying(float DeltaTime);
 	void Tick_Holstering(float DeltaTime);
 
-	void Enter_Idle();
-	void Enter_Firing();
+	void Enter_Ready();
 	void Enter_Reloading();
 	void Enter_Deploying();
 	void Enter_Holstering();
 
-	void Exit_Idle();
-	void Exit_Firing();
+	void Exit_Ready();
 	void Exit_Reloading();
 	void Exit_Deploying();
 	void Exit_Holstering();
+
+	void BeginFiring(int32 RandSeed);
+	void EndFiring();
 
 	bool Fire();
 	bool CanDoCommonAction() const;
@@ -150,9 +134,28 @@ private:
 	void SetFireMode(EWeaponFireMode NewFm);
 
 	void CorrectClientState();
+	bool IsExpired(float LastModified) const;
 
 	UFUNCTION(Client, Unreliable)
-	void Client_CorrectState(FWeaponCorrectionData Data);
+	void Client_CorrectState(FClientWeaponCorrectionData Data);
+	
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_CorrectState(FMulticastWeaponCorrectionData Data);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_StartFiring(int32 RandSeed);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_StartFiring(int32 RandSeed);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_StopFiring();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_StopFiring();
+
+	UFUNCTION()
+	void OnRep_State(EWeaponState OldState);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	USkeletalMeshComponent* Mesh1P;
@@ -163,13 +166,10 @@ private:
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UAnimInstance> ArmsAnimClass;
 
-	union
-	{
-		FWeaponState_Firing Firing;
-		FWeaponState_Reloading Reloading;
-		FWeaponState_Deploying Deploying;
-		FWeaponState_Holstering Holstering;
-	} StateObj;
+	UPROPERTY(Transient)
+	AWeapon* SwitchingTo;
+	
+	FRandomStream FireRand;
 
 	UPROPERTY(EditAnywhere, meta = (UIMin = 1, ClampMin = 1))
 	float Rpm = 650.0f;
@@ -187,6 +187,8 @@ private:
 	UPROPERTY(EditAnywhere)
 	float HolsterTime = 0.67f;
 
+	float LastStateElapsedTime;
+	
 	float Clip_LastModified;
 	float FireMode_LastModified;
 	float State_LastModified;
@@ -196,8 +198,9 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	uint8 ClipSize = 30;
 
-	UPROPERTY(Replicated, Transient, EditInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	UPROPERTY(Transient, EditInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	uint8 Clip;
+	uint8 CurBurstCount;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly,
 		meta = (AllowPrivateAccess = true, Bitmask, BitmaskEnum = EWeaponFireMode))
@@ -209,9 +212,10 @@ private:
 	UPROPERTY(Replicated, Transient, EditInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	EWeaponFireMode FireMode;
 
-	UPROPERTY(Replicated, Transient, EditInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	UPROPERTY(ReplicatedUsing = OnRep_State, Transient, EditInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	EWeaponState State;
 
 	UPROPERTY(Replicated, Transient, EditInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-	bool bAiming;
+	uint8 bAiming : 1;
+	uint8 bFiring : 1;
 };

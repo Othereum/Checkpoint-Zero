@@ -58,7 +58,7 @@ public:
 	EPosture GetPosture() const { return Posture; }
 	bool IsPostureSwitching() const;
 	bool IsProneSwitching() const;
-	float GetPostureSwitchTime(EPosture Prev, EPosture New) const;
+	static float GetPostureSwitchTime(EPosture Prev, EPosture New);
 	float GetDefaultHalfHeight(EPosture P) const;
 
 	bool IsWalkingSlow() const { return bWalkingSlow; }
@@ -83,11 +83,11 @@ private:
 
 	void ProcessSprint();
 	void ProcessSlowWalk();
-	void ProcessForceTurn();
+	void ProcessForceTurn() const;
 	void ProcessPronePush();
 	void ProcessPronePitch(float DeltaTime);
 	void UpdateRotationRate();
-	void UpdateViewPitchLimit(float DeltaTime);
+	void UpdateViewPitchLimit(float DeltaTime) const;
 	void CorrectClientState();
 
 	void ShrinkPerchRadius();

@@ -93,7 +93,7 @@ struct FInputAction
 
 static const FInputAction InputActions[]{
 	MAKE_INPUT_ACTION(Sprint, true), MAKE_INPUT_ACTION(Crouch, true), MAKE_INPUT_ACTION(Prone, true),
-	MAKE_INPUT_ACTION(WalkSlow, false), MAKE_INPUT_ACTION(Fire, true), MAKE_INPUT_ACTION(Aim, true),
+	MAKE_INPUT_ACTION(WalkSlow, false), MAKE_INPUT_ACTION(Fire, false), MAKE_INPUT_ACTION(Aim, true),
 	MAKE_INPUT_ACTION(Reload, true), MAKE_INPUT_ACTION(SwitchFiremode, true),
 };
 

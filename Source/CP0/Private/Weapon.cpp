@@ -45,26 +45,37 @@ void AWeapon::Deploy(ACP0Character* Char)
 	OnDeploy();
 }
 
-void AWeapon::Holster(AWeapon* SwitchingTo)
+void AWeapon::Holster(AWeapon* SwitchTo)
 {
-	StateObj.Holstering.SwitchingTo = SwitchingTo;
+	SwitchingTo = SwitchTo;
 	SetState(EWeaponState::Holstering);
 	OnHolster();
 }
 
 void AWeapon::StartFiring()
 {
-	if (State == EWeaponState::Idle && CanFire())
+	check(GetCharOwner() && GetCharOwner()->IsLocallyControlled());
+	
+	if (!bFiring && State == EWeaponState::Ready && CanDoCommonAction())
 	{
-		SetState(EWeaponState::Firing);
+		const auto RandSeed = FMath::Rand();
+		BeginFiring(RandSeed);
+
+		if (!HasAuthority() && GetCharOwner()->IsLocallyControlled())
+			Server_StartFiring(RandSeed);
 	}
 }
 
 void AWeapon::StopFiring()
 {
-	if (State == EWeaponState::Firing && FireMode != EWeaponFireMode::Burst)
+	check(GetCharOwner() && GetCharOwner()->IsLocallyControlled());
+	
+	if (bFiring && FireMode != EWeaponFireMode::Burst)
 	{
-		SetState(EWeaponState::Idle);
+		EndFiring();
+
+		if (!HasAuthority() && GetCharOwner()->IsLocallyControlled())
+			Server_StopFiring();
 	}
 }
 
@@ -76,7 +87,7 @@ void AWeapon::SetAiming(bool bNewAiming)
 
 void AWeapon::Reload()
 {
-	if (State == EWeaponState::Idle && CanDoCommonAction())
+	if (State == EWeaponState::Ready && CanDoCommonAction())
 	{
 		SetState(EWeaponState::Reloading);
 	}
@@ -84,7 +95,7 @@ void AWeapon::Reload()
 
 void AWeapon::SwitchFireMode()
 {
-	if (FireModes && State == EWeaponState::Idle && CanDoCommonAction())
+	if (FireModes && State == EWeaponState::Ready && CanDoCommonAction())
 	{
 		auto NewFm = static_cast<uint8>(FireMode);
 		do
@@ -101,11 +112,6 @@ void AWeapon::SwitchFireMode()
 	}
 }
 
-bool AWeapon::CanFire() const
-{
-	return CanDoCommonAction();
-}
-
 void AWeapon::BeginPlay()
 {
 	Super::BeginPlay();
@@ -120,11 +126,8 @@ void AWeapon::Tick(float DeltaTime)
 
 	switch (State)
 	{
-	case EWeaponState::Idle:
-		Tick_Idle(DeltaTime);
-		break;
-	case EWeaponState::Firing:
-		Tick_Firing(DeltaTime);
+	case EWeaponState::Ready:
+		Tick_Ready(DeltaTime);
 		break;
 	case EWeaponState::Reloading:
 		Tick_Reloading(DeltaTime);
@@ -145,10 +148,9 @@ void AWeapon::Tick(float DeltaTime)
 void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME_CONDITION(AWeapon, Clip, COND_SkipOwner);
 	DOREPLIFETIME_CONDITION(AWeapon, FireMode, COND_SkipOwner);
-	DOREPLIFETIME_CONDITION(AWeapon, bAiming, COND_SkipOwner);
 	DOREPLIFETIME_CONDITION(AWeapon, State, COND_SkipOwner);
+	DOREPLIFETIME_CONDITION(AWeapon, bAiming, COND_SkipOwner);
 }
 
 void AWeapon::PlayMontage(UAnimMontage* Montage) const
@@ -163,30 +165,33 @@ void AWeapon::StopMontage(float BlendOutTime, UAnimMontage* Montage) const
 	Mesh3P->GetAnimInstance()->Montage_Stop(BlendOutTime, Montage);
 }
 
-void AWeapon::Tick_Idle(float DeltaTime)
+void AWeapon::Tick_Ready(float DeltaTime)
 {
-	FireLag = FMath::Min(FireLag + DeltaTime, GetFireDelay());
-}
-
-void AWeapon::Tick_Firing(float DeltaTime)
-{
-	if (!CanFire())
+	if (bFiring)
 	{
-		SetState(EWeaponState::Idle);
-		return;
-	}
-
-	FireLag += DeltaTime;
-
-	const auto FireDelay = GetFireDelay();
-	while (FireLag >= FireDelay)
-	{
-		FireLag -= FireDelay;
-		if (!Fire())
+		if (State != EWeaponState::Ready || !CanDoCommonAction())
 		{
-			SetState(EWeaponState::Idle);
-			break;
+			EndFiring();
 		}
+		else
+		{
+			FireLag += DeltaTime;
+
+			const auto FireDelay = GetFireDelay();
+			while (FireLag >= FireDelay)
+			{
+				FireLag -= FireDelay;
+				if (!Fire())
+				{
+					EndFiring();
+					break;
+				}
+			}
+		}
+	}
+	else
+	{
+		FireLag = FMath::Min(FireLag + DeltaTime, GetFireDelay());
 	}
 }
 
@@ -194,87 +199,67 @@ void AWeapon::Tick_Reloading(float DeltaTime)
 {
 	const auto bTactical = Clip > 0;
 	const auto ReloadTime = bTactical ? ReloadTime_Tactical : ReloadTime_Empty;
-	StateObj.Reloading.ElapsedTime += DeltaTime;
-	if (StateObj.Reloading.ElapsedTime >= ReloadTime)
+	LastStateElapsedTime += DeltaTime;
+	if (LastStateElapsedTime >= ReloadTime)
 	{
 		SetClip(ClipSize + bTactical);
-		SetState(EWeaponState::Idle);
+		SetState(EWeaponState::Ready);
 	}
 }
 
 void AWeapon::Tick_Deploying(float DeltaTime)
 {
-	StateObj.Deploying.ElapsedTime += DeltaTime;
-	if (StateObj.Deploying.ElapsedTime >= DeployTime)
+	LastStateElapsedTime += DeltaTime;
+	if (LastStateElapsedTime >= DeployTime)
 	{
-		SetState(EWeaponState::Idle);
+		SetState(EWeaponState::Ready);
 	}
 }
 
 void AWeapon::Tick_Holstering(float DeltaTime)
 {
-	StateObj.Holstering.ElapsedTime += DeltaTime;
-	if (StateObj.Holstering.ElapsedTime >= HolsterTime)
+	LastStateElapsedTime += DeltaTime;
+	if (LastStateElapsedTime >= HolsterTime)
 	{
 		if (HasAuthority())
 		{
 			const auto WepComp = GetWeaponComp();
-			WepComp->Weapon = StateObj.Holstering.SwitchingTo;
+			WepComp->Weapon = SwitchingTo;
 			if (WepComp->Weapon)
 			{
 				WepComp->Weapon->Deploy(GetCharOwner());
 			}
+			SwitchingTo = nullptr;
 		}
 	}
 }
 
-void AWeapon::Enter_Idle()
+void AWeapon::Enter_Ready()
 {
-}
-
-void AWeapon::Enter_Firing()
-{
-	StateObj.Firing.CurBurstCount = 0;
-	
-	const auto FireDelay = GetFireDelay();
-	if (FireLag >= FireDelay)
-	{
-		FireLag -= FireDelay;
-
-		if (!Fire())
-			SetState(EWeaponState::Idle);
-	}
 }
 
 void AWeapon::Enter_Reloading()
 {
-	StateObj.Deploying.ElapsedTime = 0.0f;
 	OnReloadStart(Clip <= 0);
 }
 
 void AWeapon::Enter_Deploying()
 {
-	StateObj.Deploying.ElapsedTime = 0.0f;
 	// 이 시점에는 아직 Owner가 설정되지 않았을 수도 있기 때문에, 웬만하면 Deploy() 함수에서 처리
 }
 
 void AWeapon::Enter_Holstering()
 {
-	StateObj.Holstering.ElapsedTime = 0.0f;
 	OnHolster();
 }
 
-void AWeapon::Exit_Idle()
-{
-}
-
-void AWeapon::Exit_Firing()
+void AWeapon::Exit_Ready()
 {
 }
 
 void AWeapon::Exit_Reloading()
 {
-	if (StateObj.Reloading.ElapsedTime != 0.0f)
+	if (LastStateElapsedTime != 0.0f)
 	{
 		OnReloadCancelled();
 	}
@@ -288,11 +273,30 @@ void AWeapon::Exit_Holstering()
 {
 }
 
+void AWeapon::BeginFiring(int32 RandSeed)
+{
+	CurBurstCount = 0;
+	FireRand.Initialize(RandSeed);
+	bFiring = true;
+	
+	const auto FireDelay = GetFireDelay();
+	if (FireLag >= FireDelay)
+	{
+		FireLag -= FireDelay;
+
+		if (!Fire())
+			EndFiring();
+	}
+}
+
+void AWeapon::EndFiring()
+{
+	bFiring = false;
+	CurBurstCount = 0;
+}
+
 bool AWeapon::Fire()
 {
-	if (State != EWeaponState::Firing)
-		return false;
-	
 	if (Clip == 0)
 	{
 		OnDryFire();
@@ -302,19 +306,22 @@ bool AWeapon::Fire()
 	SetClip(Clip - 1);
 
 	if (FireMode == EWeaponFireMode::Burst)
-		StateObj.Firing.CurBurstCount++;
+		CurBurstCount++;
 
 	OnFire();
 
 	if (Clip == 0)
+	{
+		OnDryFire();
 		return false;
+	}
 
 	switch (FireMode)
 	{
 	case EWeaponFireMode::SemiAuto:
 		return false;
 	case EWeaponFireMode::Burst:
-		return StateObj.Firing.CurBurstCount < BurstCount;
+		return CurBurstCount < BurstCount;
 	default:
 		return true;
 	}
@@ -335,13 +342,13 @@ void AWeapon::SetClip(uint8 NewClip)
 
 void AWeapon::SetState(EWeaponState NewState)
 {
+	if (State == NewState)
+		return;
+	
 	switch (State)
 	{
-	case EWeaponState::Idle:
-		Exit_Idle();
-		break;
-	case EWeaponState::Firing:
-		Exit_Firing();
+	case EWeaponState::Ready:
+		Exit_Ready();
 		break;
 	case EWeaponState::Reloading:
 		Exit_Reloading();
@@ -356,14 +363,12 @@ void AWeapon::SetState(EWeaponState NewState)
 
 	State = NewState;
 	State_LastModified = GetWorld()->GetRealTimeSeconds();
-
+	LastStateElapsedTime = 0.0f;
+	
 	switch (State)
 	{
-	case EWeaponState::Idle:
-		Enter_Idle();
-		break;
-	case EWeaponState::Firing:
-		Enter_Firing();
+	case EWeaponState::Ready:
+		Enter_Ready();
 		break;
 	case EWeaponState::Reloading:
 		Enter_Reloading();
@@ -391,36 +396,94 @@ void AWeapon::CorrectClientState()
 	const auto Now = GetWorld()->GetRealTimeSeconds();
 	if (NextCorrection <= Now)
 	{
-		Client_CorrectState({Clip, FireMode, State, bAiming});
+		Client_CorrectState({FireMode, bAiming});
+		Multicast_CorrectState({Clip, State});
 		NextCorrection = Now + 0.5f;
 	}
 }
 
-void AWeapon::Client_CorrectState_Implementation(FWeaponCorrectionData Data)
+bool AWeapon::IsExpired(float LastModified) const
 {
-	const auto Char = GetCharOwner();
-	if (!Char)
-		return;
+	if (const auto Char = GetCharOwner())
+	{
+		if (const auto PS = Char->GetPlayerState())
+		{
+			const auto PingMs = PS->GetPing() * (Char->IsLocallyControlled() ? 4.0f : 2.0f);
+			const auto Now = GetWorld()->GetRealTimeSeconds();
+			return (Now - LastModified) * 1000.0f >= PingMs;
+		}
+	}
+	return true;
+}
 
-	const auto PS = Char->GetPlayerState();
-	if (!PS)
-		return;
-
-	const auto PingMs = PS->GetPing() * 4.0f;
-	const auto Now = GetWorld()->GetRealTimeSeconds();
-
-	auto IsExpired = [&](float LastModified) { return (Now - LastModified) * 1000.0f >= PingMs; };
-
-	if (Clip != Data.Clip && IsExpired(Clip_LastModified))
-		Clip = Data.Clip;
-
+void AWeapon::Client_CorrectState_Implementation(FClientWeaponCorrectionData Data)
+{
 	if (FireMode != Data.FireMode && IsExpired(FireMode_LastModified))
 		FireMode = Data.FireMode;
-
-	if (State != Data.State && IsExpired(State_LastModified))
-		if (!(State == EWeaponState::Firing && Data.State == EWeaponState::Idle) && Data.State != EWeaponState::Firing)
-			SetState(Data.State);
 
 	if (bAiming != Data.bAiming && IsExpired(Aiming_LastModified))
 		bAiming = Data.bAiming;
 }
+
+void AWeapon::Multicast_CorrectState_Implementation(FMulticastWeaponCorrectionData Data)
+{
+	if (Clip != Data.Clip && IsExpired(Clip_LastModified))
+		Clip = Data.Clip;
+	
+	if (State != Data.State && IsExpired(State_LastModified))
+		SetState(Data.State);
+}
+
+void AWeapon::Server_StartFiring_Implementation(int32 RandSeed)
+{
+	BeginFiring(RandSeed);
+	Multicast_StartFiring(RandSeed);
+}
+
+bool AWeapon::Server_StartFiring_Validate(int32 RandSeed)
+{
+	return true;
+}
+
+void AWeapon::Multicast_StartFiring_Implementation(int32 RandSeed)
+{
+	if (HasAuthority())
+		return;
+	
+	const auto Char = GetCharOwner();
+	if (Char && !Char->IsLocallyControlled())
+	{
+		BeginFiring(RandSeed);
+	}
+}
+
+void AWeapon::Server_StopFiring_Implementation()
+{
+	EndFiring();
+	Multicast_StopFiring();
+}
+
+bool AWeapon::Server_StopFiring_Validate()
+{
+	return true;
+}
+
+void AWeapon::Multicast_StopFiring_Implementation()
+{
+	if (HasAuthority())
+		return;
+	
+	const auto Char = GetCharOwner();
+	if (Char && !Char->IsLocallyControlled())
+	{
+		EndFiring();
+	}
+}
+
+void AWeapon::OnRep_State(EWeaponState OldState)
+{
+	const auto NewState = State;
+	State = OldState;
+	SetState(NewState);
+}
+

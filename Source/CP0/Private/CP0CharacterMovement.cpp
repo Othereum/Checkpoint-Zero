@@ -46,8 +46,9 @@ float UCP0CharacterMovement::GetMaxSpeed() const
 		case EPosture::Prone:
 			return 100.0f;
 		}
+	default:
+		return Super::GetMaxSpeed();
 	}
-	return Super::GetMaxSpeed();
 }
 
 float UCP0CharacterMovement::GetMaxAcceleration() const
@@ -58,8 +59,9 @@ float UCP0CharacterMovement::GetMaxAcceleration() const
 		return 512.0f;
 	case EPosture::Prone:
 		return 256.0f;
+	default:
+		return MaxAcceleration;
 	}
-	return MaxAcceleration;
 }
 
 bool UCP0CharacterMovement::CanAttemptJump() const
@@ -113,6 +115,7 @@ bool UCP0CharacterMovement::TryStartSprint()
 	case EPosture::Crouch:
 		if (!TrySetPosture(EPosture::Stand))
 			return false;
+	default: ;
 	}
 
 	SetSprinting(true);
@@ -230,7 +233,7 @@ bool UCP0CharacterMovement::IsProneSwitching() const
 	return NextPostureSwitch - 0.2f > CurTime() && (PrevPosture == EPosture::Prone || Posture == EPosture::Prone);
 }
 
-float UCP0CharacterMovement::GetPostureSwitchTime(EPosture Prev, EPosture New) const
+float UCP0CharacterMovement::GetPostureSwitchTime(EPosture Prev, EPosture New)
 {
 	switch (Prev)
 	{
@@ -241,6 +244,7 @@ float UCP0CharacterMovement::GetPostureSwitchTime(EPosture Prev, EPosture New) c
 			return 0.5f;
 		case EPosture::Prone:
 			return 1.5f;
+		default: ;
 		}
 		break;
 	case EPosture::Crouch:
@@ -250,6 +254,7 @@ float UCP0CharacterMovement::GetPostureSwitchTime(EPosture Prev, EPosture New) c
 			return 0.5f;
 		case EPosture::Prone:
 			return 1.0f;
+		default: ;
 		}
 		break;
 	case EPosture::Prone:
@@ -259,6 +264,7 @@ float UCP0CharacterMovement::GetPostureSwitchTime(EPosture Prev, EPosture New) c
 			return 1.8f;
 		case EPosture::Crouch:
 			return 1.2f;
+		default: ;
 		}
 		break;
 	}
@@ -273,8 +279,9 @@ float UCP0CharacterMovement::GetDefaultHalfHeight(EPosture P) const
 		return CrouchedHalfHeight;
 	case EPosture::Prone:
 		return 34.0f;
+	default:
+		return GetCharacterOwner()->GetDefaultHalfHeight();
 	}
-	return GetCharacterOwner()->GetDefaultHalfHeight();
 }
 
 bool UCP0CharacterMovement::CanWalkSlow() const
@@ -368,6 +375,7 @@ void UCP0CharacterMovement::OnMovementModeChanged(EMovementMode PreviousMovement
 		case MOVE_Walking:
 		case MOVE_NavWalking:
 			CharacterOwner->OnJumped();
+		default: ;
 		}
 	}
 }
@@ -376,8 +384,8 @@ void UCP0CharacterMovement::ProcessLanded(const FHitResult& Hit, float remaining
 {
 	Super::ProcessLanded(Hit, remainingTime, Iterations);
 
-	Velocity.X *= 0.1f;
-	Velocity.Y *= 0.1f;
+	Velocity.X *= 0.2f;
+	Velocity.Y *= 0.2f;
 }
 
 bool UCP0CharacterMovement::DoJump(bool bReplayingMoves)
@@ -414,6 +422,7 @@ void UCP0CharacterMovement::ProcessSprint()
 	case ROLE_AutonomousProxy:
 		if (!CanSprint())
 			StopSprint();
+	default: ;
 	}
 }
 
@@ -466,7 +475,7 @@ void UCP0CharacterMovement::ProcessPronePitch(float DeltaTime)
 	}
 }
 
-void UCP0CharacterMovement::UpdateViewPitchLimit(float DeltaTime)
+void UCP0CharacterMovement::UpdateViewPitchLimit(float DeltaTime) const
 {
 	const auto* const PC = PawnOwner->GetController<APlayerController>();
 	if (!PC)
@@ -479,7 +488,6 @@ void UCP0CharacterMovement::UpdateViewPitchLimit(float DeltaTime)
 	if (Posture == EPosture::Prone)
 		Limit /= 2.0f;
 
-	const auto* const Mesh = CharacterOwner->GetMesh();
 	Limit -= FVector2D{MeshPitchOffset};
 
 	constexpr auto Speed = 2.0f;
@@ -524,8 +532,9 @@ void UCP0CharacterMovement::UpdateRotationRate()
 			return 90.0f;
 		case EPosture::Prone:
 			return 45.0f;
+		default:
+			return GetDefaultSelf()->RotationRate.Yaw;
 		}
-		return GetDefaultSelf()->RotationRate.Yaw;
 	}();
 
 	constexpr auto MaxSpeed = 10.0f;
@@ -535,7 +544,7 @@ void UCP0CharacterMovement::UpdateRotationRate()
 	}
 }
 
-void UCP0CharacterMovement::ProcessForceTurn()
+void UCP0CharacterMovement::ProcessForceTurn() const
 {
 	if (GetOwnerRole() == ROLE_SimulatedProxy)
 		return;
