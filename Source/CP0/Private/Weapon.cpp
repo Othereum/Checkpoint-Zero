@@ -3,22 +3,22 @@
 #include "Weapon.h"
 #include "CP0Character.h"
 #include "CP0CharacterMovement.h"
+#include "WeaponComponent.h"
 #include "GameFramework/PlayerState.h"
 #include "Net/UnrealNetwork.h"
-#include "WeaponComponent.h"
 
 AWeapon::AWeapon()
-	: Mesh1P{CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh1P"))},
-	  Mesh3P{CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh3P"))}
+	: RootScene{CreateDefaultSubobject<USceneComponent>(TEXT("RootScene"))},
+	  Mesh{CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh"))}
 {
 	PrimaryActorTick.bCanEverTick = true;
-	RootComponent = Mesh1P;
-	Mesh3P->SetupAttachment(Mesh1P);
+	RootComponent = RootScene;
+	Mesh->SetupAttachment(RootScene);
 }
 
 ACP0Character* AWeapon::GetCharOwner() const
 {
-	return CastChecked<ACP0Character>(GetOwner(), ECastCheckedType::NullAllowed);
+	return GetOwner<ACP0Character>();
 }
 
 UWeaponComponent* AWeapon::GetWeaponComp() const
@@ -29,19 +29,26 @@ UWeaponComponent* AWeapon::GetWeaponComp() const
 
 void AWeapon::Deploy(ACP0Character* Char)
 {
-	SetOwner(Char);
-	SetInstigator(Char);
-
 	const FName GunSock = TEXT("R_GunSocket");
 	const FAttachmentTransformRules Rules{EAttachmentRule::KeepRelative, true};
-	Mesh1P->AttachToComponent(Char->GetArms(), Rules, GunSock);
-	Mesh1P->SetRelativeTransform(FTransform::Identity);
-	Mesh3P->AttachToComponent(Char->GetMesh(), Rules, GunSock);
-	Mesh3P->SetRelativeTransform(FTransform::Identity);
-	
+
+	if (HasAuthority())
+	{
+		SetOwner(Char);
+		SetInstigator(Char);
+		RootScene->AttachToComponent(Char->GetMesh(), Rules, GunSock);
+		RootScene->SetRelativeTransform(FTransform::Identity);
+	}
+	if (Char->IsLocallyControlled())
+	{
+		Mesh->AttachToComponent(Char->GetArms(), Rules, GunSock);
+		Mesh->SetRelativeTransform(FTransform::Identity);
+		Mesh->SetCastShadow(false);
+	}
+
 	SetState(EWeaponState::Deploying);
 	Char->GetArms()->SetAnimInstanceClass(ArmsAnimClass);
-	
+
 	OnDeploy();
 }
 
@@ -55,7 +62,7 @@ void AWeapon::Holster(AWeapon* SwitchTo)
 void AWeapon::StartFiring()
 {
 	check(GetCharOwner() && GetCharOwner()->IsLocallyControlled());
-	
+
 	if (!bFiring && State == EWeaponState::Ready && CanDoCommonAction())
 	{
 		const auto RandSeed = FMath::Rand();
@@ -69,7 +76,7 @@ void AWeapon::StartFiring()
 void AWeapon::StopFiring()
 {
 	check(GetCharOwner() && GetCharOwner()->IsLocallyControlled());
-	
+
 	if (bFiring && FireMode != EWeaponFireMode::Burst)
 	{
 		EndFiring();
@@ -153,22 +160,32 @@ void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 	DOREPLIFETIME_CONDITION(AWeapon, bAiming, COND_SkipOwner);
 }
 
-void AWeapon::PlayMontage(UAnimMontage* Montage) const
+void AWeapon::PlayMontage(UAnimMontage* ForWeapon, UAnimMontage* ForArms, UAnimMontage* ForBody) const
 {
-	if (const auto AnimInst = Mesh1P->GetAnimInstance())
-		AnimInst->Montage_Play(Montage);
-	
-	if (const auto AnimInst = Mesh3P->GetAnimInstance())
-		AnimInst->Montage_Play(Montage);
+	if (const auto AnimInst = Mesh->GetAnimInstance())
+		AnimInst->Montage_Play(ForWeapon);
+
+	if (const auto Char = GetCharOwner())
+	{
+		if (const auto AnimInst = Char->GetArms()->GetAnimInstance())
+			AnimInst->Montage_Play(ForArms);
+		if (const auto AnimInst = Char->GetMesh()->GetAnimInstance())
+			AnimInst->Montage_Play(ForBody);
+	}
 }
 
-void AWeapon::StopMontage(float BlendOutTime, UAnimMontage* Montage) const
+void AWeapon::StopMontage(float BlendOutTime, UAnimMontage* ForWeapon, UAnimMontage* ForArms, UAnimMontage* ForBody) const
 {
-	if (const auto AnimInst = Mesh1P->GetAnimInstance())
-		AnimInst->Montage_Stop(BlendOutTime, Montage);
-	
-	if (const auto AnimInst = Mesh3P->GetAnimInstance())
-		AnimInst->Montage_Stop(BlendOutTime, Montage);
+	if (const auto AnimInst = Mesh->GetAnimInstance())
+		AnimInst->Montage_Stop(BlendOutTime, ForWeapon);
+
+	if (const auto Char = GetCharOwner())
+	{
+		if (const auto AnimInst = Char->GetArms()->GetAnimInstance())
+			AnimInst->Montage_Stop(BlendOutTime, ForArms);
+		if (const auto AnimInst = Char->GetMesh()->GetAnimInstance())
+			AnimInst->Montage_Stop(BlendOutTime, ForBody);
+	}
 }
 
 void AWeapon::Tick_Ready(float DeltaTime)
@@ -284,7 +301,7 @@ void AWeapon::BeginFiring(int32 RandSeed)
 	CurBurstCount = 0;
 	FireRand.Initialize(RandSeed);
 	bFiring = true;
-	
+
 	const auto FireDelay = GetFireDelay();
 	if (FireLag >= FireDelay)
 	{
@@ -350,7 +367,7 @@ void AWeapon::SetState(EWeaponState NewState)
 {
 	if (State == NewState)
 		return;
-	
+
 	switch (State)
 	{
 	case EWeaponState::Ready:
@@ -370,7 +387,7 @@ void AWeapon::SetState(EWeaponState NewState)
 	State = NewState;
 	State_LastModified = GetWorld()->GetRealTimeSeconds();
 	LastStateElapsedTime = 0.0f;
-	
+
 	switch (State)
 	{
 	case EWeaponState::Ready:
@@ -435,7 +452,7 @@ void AWeapon::Multicast_CorrectState_Implementation(FMulticastWeaponCorrectionDa
 {
 	if (Clip != Data.Clip && IsExpired(Clip_LastModified))
 		Clip = Data.Clip;
-	
+
 	if (State != Data.State && IsExpired(State_LastModified))
 		SetState(Data.State);
 }
@@ -455,7 +472,7 @@ void AWeapon::Multicast_StartFiring_Implementation(int32 RandSeed)
 {
 	if (HasAuthority())
 		return;
-	
+
 	const auto Char = GetCharOwner();
 	if (Char && !Char->IsLocallyControlled())
 	{
@@ -478,7 +495,7 @@ void AWeapon::Multicast_StopFiring_Implementation()
 {
 	if (HasAuthority())
 		return;
-	
+
 	const auto Char = GetCharOwner();
 	if (Char && !Char->IsLocallyControlled())
 	{
@@ -492,4 +509,3 @@ void AWeapon::OnRep_State(EWeaponState OldState)
 	State = OldState;
 	SetState(NewState);
 }
-

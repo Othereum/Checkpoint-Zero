@@ -73,10 +73,11 @@ public:
 	float GetFireDelay() const { return 60.0f / Rpm; }
 
 	UFUNCTION(BlueprintCallable)
-	void PlayMontage(UAnimMontage* Montage) const;
+	void PlayMontage(UAnimMontage* ForWeapon, UAnimMontage* ForArms, UAnimMontage* ForBody) const;
 
 	UFUNCTION(BlueprintCallable)
-	void StopMontage(float BlendOutTime = 0.0f, UAnimMontage* Montage = nullptr) const;
+	void StopMontage(float BlendOutTime = 0.0f, UAnimMontage* ForWeapon = nullptr, UAnimMontage* ForArms = nullptr,
+	                 UAnimMontage* ForBody = nullptr) const;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FTransform ArmsOffset;
@@ -138,7 +139,7 @@ private:
 
 	UFUNCTION(Client, Unreliable)
 	void Client_CorrectState(FClientWeaponCorrectionData Data);
-	
+
 	UFUNCTION(NetMulticast, Unreliable)
 	void Multicast_CorrectState(FMulticastWeaponCorrectionData Data);
 
@@ -158,17 +159,17 @@ private:
 	void OnRep_State(EWeaponState OldState);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-	USkeletalMeshComponent* Mesh1P;
+	USceneComponent* RootScene;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-	USkeletalMeshComponent* Mesh3P;
+	USkeletalMeshComponent* Mesh;
 
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UAnimInstance> ArmsAnimClass;
 
 	UPROPERTY(Transient)
 	AWeapon* SwitchingTo;
-	
+
 	FRandomStream FireRand;
 
 	UPROPERTY(EditAnywhere, meta = (UIMin = 1, ClampMin = 1))
@@ -188,7 +189,7 @@ private:
 	float HolsterTime = 0.67f;
 
 	float LastStateElapsedTime;
-	
+
 	float Clip_LastModified;
 	float FireMode_LastModified;
 	float State_LastModified;
@@ -212,7 +213,8 @@ private:
 	UPROPERTY(Replicated, Transient, EditInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	EWeaponFireMode FireMode;
 
-	UPROPERTY(ReplicatedUsing = OnRep_State, Transient, EditInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	UPROPERTY(ReplicatedUsing = OnRep_State, Transient, EditInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess
+		= true))
 	EWeaponState State;
 
 	UPROPERTY(Replicated, Transient, EditInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
