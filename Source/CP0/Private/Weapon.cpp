@@ -30,19 +30,17 @@ UWeaponComponent* AWeapon::GetWeaponComp() const
 void AWeapon::Deploy(ACP0Character* Char)
 {
 	const FName GunSock = TEXT("R_GunSocket");
-	const FAttachmentTransformRules Rules{EAttachmentRule::KeepRelative, true};
+	const FAttachmentTransformRules Rules{EAttachmentRule::SnapToTarget, true};
 
 	if (HasAuthority())
 	{
 		SetOwner(Char);
 		SetInstigator(Char);
 		RootScene->AttachToComponent(Char->GetMesh(), Rules, GunSock);
-		RootScene->SetRelativeTransform(FTransform::Identity);
 	}
 	if (Char->IsLocallyControlled())
 	{
 		Mesh->AttachToComponent(Char->GetArms(), Rules, GunSock);
-		Mesh->SetRelativeTransform(FTransform::Identity);
 		Mesh->SetCastShadow(false);
 	}
 
